@@ -40,6 +40,7 @@ import {
 } from "./game";
 import { sprite, uiIcon, gem, scenery, torch } from "./art";
 import { mountRpg, type RpgController } from "./rpg-view";
+import "./ui-art.css";
 
 type View = "gate" | "worlds" | "world" | "relics" | "prestige";
 type Play = {
@@ -463,7 +464,7 @@ function shopRow(kind: Upgrade, label: string, image: string): string {
   const w = state.worlds[current],
     level =
       kind === "helper" ? w.helpers : kind === "power" ? w.power : w.resonance;
-  return `<button class="shop-row ${kind === "resonance" && w.score < 250 ? "unseen" : ""}" data-buy="${kind}" id="buy-${kind}" ${w.bank < price(w, kind, state) || (kind === "resonance" && w.score < 250) ? "disabled" : ""}>${sprite(image)}<span class="upgrade-name"><strong>${kind === "resonance" && w.score < 250 ? "???" : label}</strong><small id="${kind}-level">${kind === "helper" ? `${level} · +${format(w.power * 2 * multiplier(w) * productionBoost(state, current) * idleBoost(state))}/s` : kind === "power" ? `LV ${level} · +${format(w.power * 3 * multiplier(w) * productionBoost(state, current))}` : `LV ${level} · ×${format(multiplier(w) * productionBoost(state, current))}`}</small></span><span class="upgrade-cost"><span id="${kind}-price">${format(price(w, kind, state))}</span><small>+</small></span></button>`;
+  return `<button class="shop-row ${kind === "resonance" && w.score < 250 ? "unseen" : ""}" data-buy="${kind}" id="buy-${kind}" ${w.bank < price(w, kind, state) || (kind === "resonance" && w.score < 250) ? "disabled" : ""}>${sprite(image)}<span class="upgrade-name"><strong>${kind === "resonance" && w.score < 250 ? "???" : label}</strong><small id="${kind}-level">${kind === "helper" ? `${level} · +${format(w.power * 2 * multiplier(w) * productionBoost(state, current) * idleBoost(state))}/s` : kind === "power" ? `LV ${level} · +${format(w.power * 3 * multiplier(w) * productionBoost(state, current))}` : `LV ${level} · ×${format(multiplier(w) * productionBoost(state, current))}`}</small></span><span class="upgrade-cost"><span id="${kind}-price">${format(price(w, kind, state))}</span><small>${uiIcon("plus")}</small></span></button>`;
 }
 function helperSprites(): string {
   return `<div class="scene-helpers">${Array.from({ length: Math.min(5, state.worlds[current].helpers) }, (_, i) => sprite(helpers[current], "helper-sprite helper-" + i)).join("")}</div>`;

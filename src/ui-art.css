@@ -1,0 +1,151 @@
+/* Original transparent bitmap doodles; the frame corners stay drawn at any size. */
+.ui-icon,
+.gem {
+  image-rendering: pixelated;
+  overflow: visible;
+}
+.ui-icon {
+  pointer-events: none;
+}
+.nav-item > .ui-icon {
+  width: 34px;
+  height: 34px;
+  opacity: 0.68;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+}
+.nav-item.selected > .ui-icon,
+.nav-item:hover > .ui-icon {
+  opacity: 1;
+  transform: rotate(-3deg);
+}
+.icon-button > .ui-icon {
+  width: 25px;
+  height: 25px;
+}
+.close-dialog > .ui-icon {
+  width: 23px;
+  height: 23px;
+}
+.text-action > .ui-icon {
+  width: 21px;
+  height: 21px;
+}
+.setting-row > .ui-icon {
+  width: 25px;
+  height: 25px;
+}
+.setting-row > .ui-icon:last-child {
+  width: 21px;
+  height: 21px;
+}
+.pocket-bar > .ui-icon {
+  width: 24px;
+  height: 24px;
+}
+.upgrade-cost small > .ui-icon {
+  width: 16px;
+  height: 16px;
+}
+.tiny-diamond,
+.world-heading .eyebrow .tiny-diamond {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 0;
+  background: url("/sprites/ui-spark.png") center / 24px 24px no-repeat;
+  image-rendering: pixelated;
+  transform: none;
+}
+.world-card,
+.mini-world,
+.shop-row,
+.pocket-bar,
+.relic-cabinet,
+.tree-node,
+.rebirth-panel,
+dialog,
+.secondary-button {
+  border-image: url("/sprites/ui-frame.png") 12 / 7px / 0 stretch;
+}
+.tree-node.purchasable,
+.nav-item.selected,
+.shop-row:hover:not(:disabled) {
+  border-image: url("/sprites/ui-frame-gold.png") 12 / 7px / 0 stretch;
+}
+.tree-node.owned {
+  border-image-source: url("/sprites/ui-frame-green.png");
+}
+.primary-button,
+.danger-button {
+  border-image: url("/sprites/ui-frame-gold.png") 12 / 8px / 0 stretch;
+}
+.kingdom-app .rpg-button,
+.rpg-paper {
+  border-image: url("/sprites/ui-frame-paper.png") 12 / 6px / 0 stretch;
+}
+.toggle,
+.toggle.on {
+  width: 38px;
+  height: 23px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: url("/sprites/ui-toggle-off.png") center / 38px 22px no-repeat;
+  image-rendering: pixelated;
+}
+.toggle.on {
+  background-image: url("/sprites/ui-toggle-on.png");
+}
+.toggle:after {
+  content: none;
+}
+@media (max-width: 650px) {
+  .bottom-dock .nav-item > .ui-icon {
+    width: 29px;
+    height: 29px;
+  }
+  .bottom-dock .nav-item {
+    gap: 2px;
+  }
+  .header-actions .ui-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .text-action > .ui-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.kingdom-tabs > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.kingdom-tabs > button > .sprite {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+@media (max-width: 650px) {
+  .kingdom-tabs > button {
+    flex-direction: column;
+    gap: 4px;
+    min-width: 44px;
+  }
+  .kingdom-tabs > button > .sprite {
+    width: 25px;
+    height: 25px;
+  }
+  /* Make room for illustrated tabs while keeping combat above the dock. */
+  .kingdom-app .rpg-canvas {
+    height: 238px;
+  }
+}
+@media (max-width: 370px) {
+  .kingdom-app .rpg-canvas {
+    height: 228px;
+  }
+}

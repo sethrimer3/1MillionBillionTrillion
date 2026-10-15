@@ -39,6 +39,14 @@ export function mountRpg(
     filter = "all",
     key = "",
     lastResult: Result | undefined;
+  const tabArt: Record<Tab, string> = {
+    trail: "rpg-sword",
+    bag: "rpg-chest",
+    hero: "rpg-hero",
+    map: "rpg-map",
+    camp: "rpg-camp",
+    scraps: "rpg-scroll",
+  };
   function tabs(): { id: Tab; name: string; open: boolean }[] {
     const r = getState().rpg;
     return [
@@ -166,7 +174,7 @@ export function mountRpg(
       .filter((t) => t.open)
       .map(
         (t) =>
-          `<button class="${tab === t.id ? "current" : ""}" data-rpg-tab="${t.id}" ${tab === t.id ? 'aria-current="page"' : ""}>${t.name}${t.id === "hero" && points(r) > 0 ? "<i>" + points(r) + "</i>" : ""}</button>`,
+          `<button class="${tab === t.id ? "current" : ""}" data-rpg-tab="${t.id}" ${tab === t.id ? 'aria-current="page"' : ""}>${sprite(tabArt[t.id])}<span>${t.name}</span>${t.id === "hero" && points(r) > 0 ? "<i>" + points(r) + "</i>" : ""}</button>`,
       )
       .join(
         "",
