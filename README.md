@@ -1,10 +1,10 @@
 # million. billion. trillion.
 
-A mobile-friendly, hand-drawn idle game in HTML, CSS, and TypeScript. Grow seven rainbow worlds, discover an eighth secret world, and multiply their lifetime scores to reach **10²⁷** and open a mysterious gate.
+An installable mobile idle game built with HTML, TypeScript, CSS, and original Paint-style PNG sprites. A dark, torchlit gate connects eight small worlds. The interface has no tutorial screens or walkthroughs.
 
-## Run
+## Development
 
-Requires Node.js 22.18+ or 24+.
+Node.js 22.18+ or 24+.
 
 ```sh
 npm ci
@@ -12,13 +12,24 @@ npm run dev
 ```
 
 ```sh
-npm test       # progression, save recovery, offline production, and win threshold
-npm run build # TypeScript validation and production output in dist/
-npm run preview
+npm test              # progression, upgrades, save migration, offline production
+npm run build         # type checking, production bundle, offline service worker
+npm run preview       # serve the production app
+npm run test:browser  # desktop/mobile gameplay, navigation, save recovery, offline relaunch
 ```
 
-Each world has a distinct tapping activity, spendable resources, permanent upgrades, and idle helpers. Lifetime scores never decrease when buying upgrades. Progress saves in this browser's local storage every five seconds and when leaving; helpers produce up to eight hours of offline rewards. Sound is optional. The star in the footer unlocks the secret world once all seven gems are collected and the total reaches 10 billion.
+Browser tests use system Chromium when available. Otherwise, run `npx playwright install chromium`, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to a Chromium executable. The browser test runner builds and starts its own production server.
 
-The journey bar measures progress through 27 orders of magnitude. Seven gem colors correspond to the seven rainbow games; the eighth world is secret. Opening the gate reveals the ending, and play can continue afterward.
+## Files
 
-GitHub Pages builds and deploys `dist/` through the existing Actions workflow. Configure Pages to use GitHub Actions. No server, database, or credentials are needed for local play.
+- `src/main.ts`: application navigation, activities, settings, and UI feedback.
+- `src/game.ts`: progression, purchases, save migration, and discoveries.
+- `src/art.ts`: sprite presentation and environmental artwork.
+- `src/style.css`: app layout, world scenery, and sprite animations.
+- `public/sprites/`: original raster artwork, including three-frame flame animations.
+- `scripts/draw_sprites.py`: reproducible sprite sources; run with Python 3, no packages needed.
+- `vite.config.ts`: production asset caching and service-worker generation.
+
+Existing `mbt-save-v1` saves migrate in place. Progress remains local to the browser; export/import is available in Settings. Assets and fonts are bundled locally. The production app works offline after its first completed load; processes and offline caches are independent of gameplay saves.
+
+The GitHub Pages workflow tests, builds, and deploys `dist/`. Configure Pages to use GitHub Actions. Relative asset URLs, manifest scope, and service-worker registration support the repository's Pages subdirectory.
