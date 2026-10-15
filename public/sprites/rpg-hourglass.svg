@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 112" width="96" height="112">
+<defs><filter id="pencil" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".065" numOctaves="2" seed="19"/><feDisplacementMap in="SourceGraphic" scale=".65"/></filter></defs>
+<g filter="url(#pencil)" stroke="#302f41" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m23 16 52-1-2 11-48 1Zm2 78 49 1 1 11-52-1Z" fill="#b99376"/><path d="M29 28c0 20 8 23 16 32-12 11-17 21-16 34l40 1c1-18-6-26-17-35 12-11 18-20 17-33Z" fill="#bccbcc"/><path d="m34 40 14 16 17-17-31 1Zm13 25-13 23 31 1-15-24Z" fill="#dfc28d"/><path d="m48 59 1 16M34 30l-1 7m1 45-1 8" stroke="#f0e4c8" stroke-width="2.4"/></g></svg>

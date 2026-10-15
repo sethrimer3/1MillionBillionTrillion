@@ -94,16 +94,28 @@ export const WORLDS = [
     unlock: 100000000n,
   },
   {
-    name: "The in-between",
-    title: "You found the space between.",
-    color: "#6d7775",
-    pale: "#e8ece6",
-    kind: "star",
-    noun: "possibilities",
-    action: "Imagine a possibility",
-    auto: "A friendly nothing",
+    name: "Prismatic heart",
+    title: "Every color. All at once.",
+    color: "#b9dedb",
+    pale: "#eff9f5",
+    kind: "rpg-iridescent",
+    noun: "refractions",
+    action: "Turn the crystal",
+    auto: "Prism wisp",
     desc: "Some colors don’t have a name.",
-    unlock: 10000000000n,
+    unlock: 0n,
+  },
+  {
+    name: "The quiet void",
+    title: "Even nothing has a weight.",
+    color: "#9d87c9",
+    pale: "#ded4ed",
+    kind: "rpg-void",
+    noun: "singularities",
+    action: "Feed the void",
+    auto: "Orbiting shadow",
+    desc: "Beyond the other side.",
+    unlock: 0n,
   },
 ] as const;
 export type WorldState = {
@@ -124,6 +136,7 @@ export type State = {
   motion: boolean;
   relics: string[];
   rpg: RpgState;
+  prestige: { count: number; shards: number; upgrades: string[] };
 };
 export function freshState(): State {
   return {
@@ -143,12 +156,313 @@ export function freshState(): State {
     motion: true,
     relics: [],
     rpg: createRpg(),
+    prestige: { count: 0, shards: 0, upgrades: [] },
   };
 }
 export function total(state: State): bigint {
   return state.worlds
-    .slice(0, state.secret ? 8 : state.unlocked)
+    .filter((_, i) => worldAvailable(state, i))
     .reduce((v, w) => v * BigInt(Math.max(1, Math.floor(w.score))), 1n);
+}
+export function worldAvailable(state: State, i: number): boolean {
+  return (
+    Number.isInteger(i) &&
+    i >= 0 &&
+    (i < state.unlocked ||
+      (i === 7 && state.secret) ||
+      (i === 8 && state.prestige.count >= 3))
+  );
+}
+export function gateGoal(state: State): bigint {
+  const n = state.prestige.count;
+  if (n === 0) return GOAL;
+  if (n === 1) return 10n ** 30n;
+  if (n === 2) return 10n ** 32n;
+  if (n === 3) return 42n * 10n ** 32n;
+  if (n === 4) return 42n * 10n ** 47n;
+  return 42n * 10n ** (65n + BigInt(n - 5) * 3n);
+}
+export function gateWords(state: State): string[] {
+  const n = state.prestige.count;
+  return [
+    n >= 3 ? "42" : "1",
+    ...(n >= 2 ? ["Hundred"] : []),
+    ...(n >= 1 ? ["Thousand"] : []),
+    "Million",
+    "Billion",
+    "Trillion",
+    ...(n >= 4 ? ["Quadrillion"] : []),
+    ...(n >= 5 ? ["Quintillion"] : []),
+    ...(n > 5 ? [`× 1e${(n - 5) * 3}`] : []),
+  ];
+}
+export const PRESTIGE_UPGRADES = [
+  {
+    id: "iridescent",
+    name: "A color beyond",
+    effect: "Eighth world · iridescent crystal",
+    cost: 0,
+    at: 1,
+    needs: "",
+    sprite: "rpg-iridescent",
+    branch: "root",
+  },
+  {
+    id: "kindling",
+    name: "Remembered fire",
+    effect: "×2 all production",
+    cost: 1,
+    at: 1,
+    needs: "iridescent",
+    sprite: "ember",
+    branch: "spark",
+  },
+  {
+    id: "clockwork",
+    name: "Restless hands",
+    effect: "×2 idle production",
+    cost: 2,
+    at: 1,
+    needs: "iridescent",
+    sprite: "rpg-hourglass",
+    branch: "time",
+  },
+  {
+    id: "pockets",
+    name: "Full pockets",
+    effect: "Start with 2 helpers + 100 pocket / world",
+    cost: 1,
+    at: 1,
+    needs: "iridescent",
+    sprite: "rpg-chest",
+    branch: "roots",
+  },
+  {
+    id: "resonant",
+    name: "A louder echo",
+    effect: "×2 all production",
+    cost: 3,
+    at: 2,
+    needs: "kindling",
+    sprite: "rune",
+    branch: "spark",
+  },
+  {
+    id: "rhythm",
+    name: "Borrowed hours",
+    effect: "×3 idle production",
+    cost: 3,
+    at: 2,
+    needs: "clockwork",
+    sprite: "rpg-hourglass",
+    branch: "time",
+  },
+  {
+    id: "bargain",
+    name: "Old friends",
+    effect: "80% cheaper world upgrades",
+    cost: 2,
+    at: 1,
+    needs: "pockets",
+    sprite: "gnome",
+    branch: "roots",
+  },
+  {
+    id: "spectrum",
+    name: "Sevenfold sunrise",
+    effect: "×2 rainbow world production",
+    cost: 3,
+    at: 2,
+    needs: "resonant",
+    sprite: "prism",
+    branch: "spark",
+  },
+  {
+    id: "expedition",
+    name: "Longer strides",
+    effect: "×8 RPG auto battle speed",
+    cost: 2,
+    at: 2,
+    needs: "rhythm",
+    sprite: "rpg-hero",
+    branch: "time",
+  },
+  {
+    id: "seeds",
+    name: "Deep roots",
+    effect: "Start with 3 helpers + 1 resonance / world",
+    cost: 3,
+    at: 2,
+    needs: "bargain",
+    sprite: "sprout",
+    branch: "roots",
+  },
+  {
+    id: "void",
+    name: "The missing dark",
+    effect: "Ninth world · void crystal",
+    cost: 0,
+    at: 3,
+    needs: "iridescent",
+    sprite: "rpg-void",
+    branch: "root",
+  },
+  {
+    id: "echoes",
+    name: "The world remembers",
+    effect: "×2 all production",
+    cost: 4,
+    at: 3,
+    needs: "spectrum",
+    sprite: "crystal",
+    branch: "spark",
+  },
+  {
+    id: "gravity",
+    name: "Impossible weight",
+    effect: "×100 void production",
+    cost: 4,
+    at: 3,
+    needs: "void",
+    sprite: "rpg-void",
+    branch: "roots",
+  },
+  {
+    id: "eternity",
+    name: "A thousand tomorrows",
+    effect: "×3 all production",
+    cost: 6,
+    at: 4,
+    needs: "echoes",
+    sprite: "star",
+    branch: "spark",
+  },
+  {
+    id: "abyss",
+    name: "Unfathomable",
+    effect: "×10,000 void production",
+    cost: 6,
+    at: 4,
+    needs: "gravity",
+    sprite: "rpg-void",
+    branch: "roots",
+  },
+  {
+    id: "genesis",
+    name: "Begin again, brighter",
+    effect: "×4 all production",
+    cost: 8,
+    at: 5,
+    needs: "eternity",
+    sprite: "rpg-iridescent",
+    branch: "spark",
+  },
+] as const;
+export function hasUpgrade(state: State, id: string): boolean {
+  return state.prestige.upgrades.includes(id);
+}
+export function productionBoost(state: State, i: number): number {
+  let boost = 1 + state.prestige.count;
+  for (const [id, factor] of [
+    ["kindling", 2],
+    ["resonant", 2],
+    ["echoes", 2],
+    ["eternity", 3],
+    ["genesis", 4],
+  ] as const)
+    if (hasUpgrade(state, id)) boost *= factor;
+  if (i < 7 && hasUpgrade(state, "spectrum")) boost *= 2;
+  if (i === 7) boost *= 128;
+  if (i === 8) {
+    boost *= 1e6;
+    if (hasUpgrade(state, "gravity")) boost *= 1e2;
+    if (hasUpgrade(state, "abyss")) boost *= 1e4;
+  }
+  return boost;
+}
+export function idleBoost(state: State): number {
+  return (
+    (hasUpgrade(state, "clockwork") ? 2 : 1) *
+    (hasUpgrade(state, "rhythm") ? 3 : 1)
+  );
+}
+export function cycleSpeed(state: State): number {
+  return (
+    Math.min(32, 1 + state.prestige.count * 2) *
+    (hasUpgrade(state, "clockwork") ? 2 : 1)
+  );
+}
+function seedWorlds(state: State) {
+  for (const w of state.worlds) {
+    w.helpers = Math.max(
+      w.helpers,
+      hasUpgrade(state, "seeds") ? 3 : hasUpgrade(state, "pockets") ? 2 : 0,
+    );
+    w.resonance = Math.max(w.resonance, hasUpgrade(state, "seeds") ? 1 : 0);
+    w.bank = Math.max(w.bank, hasUpgrade(state, "pockets") ? 100 : 0);
+  }
+}
+export function buyPrestigeUpgrade(state: State, id: string): boolean {
+  const node = PRESTIGE_UPGRADES.find((n) => n.id === id);
+  if (
+    !node ||
+    node.cost === 0 ||
+    hasUpgrade(state, id) ||
+    state.prestige.count < node.at ||
+    !hasUpgrade(state, node.needs) ||
+    state.prestige.shards < node.cost
+  )
+    return false;
+  state.prestige.shards -= node.cost;
+  state.prestige.upgrades.push(id);
+  if (id === "pockets" || id === "seeds") seedWorlds(state);
+  return true;
+}
+export function prestigeReward(state: State): number {
+  return 4 + 2 * Math.min(state.prestige.count, 5);
+}
+export function canPrestige(state: State): boolean {
+  return state.prestige.count < 100 && total(state) >= gateGoal(state);
+}
+export function prestige(state: State): boolean {
+  if (!canPrestige(state)) return false;
+  const meta = state.prestige;
+  meta.shards += prestigeReward(state);
+  meta.count++;
+  if (!meta.upgrades.includes("iridescent")) meta.upgrades.push("iridescent");
+  if (meta.count >= 3 && !meta.upgrades.includes("void"))
+    meta.upgrades.push("void");
+  state.worlds = freshState().worlds;
+  state.rpg = createRpg();
+  state.unlocked = 1;
+  state.secret = true;
+  state.won = false;
+  state.saved = Date.now();
+  discover(state, "answer");
+  seedWorlds(state);
+  return true;
+}
+export function credit(state: State, i: number, amount: number): number {
+  if (!worldAvailable(state, i) || !Number.isFinite(amount) || amount < 0)
+    return 0;
+  const w = state.worlds[i],
+    gain = Math.min(1e100 - w.score, amount);
+  w.score += gain;
+  w.bank = Math.min(1e100, w.bank + gain);
+  return gain;
+}
+export function tapReward(state: State, i: number, bonus = 1): number {
+  if (!worldAvailable(state, i) || !Number.isFinite(bonus) || bonus <= 0)
+    return 0;
+  return credit(
+    state,
+    i,
+    state.worlds[i].power *
+      3 *
+      multiplier(state.worlds[i]) *
+      productionBoost(state, i) *
+      Math.min(bonus, 1e6),
+  );
 }
 export function unlock(state: State): string[] {
   const names: string[] = [];
@@ -170,25 +484,41 @@ export function resonanceCost(w: WorldState): number {
 export function multiplier(w: WorldState): number {
   return 2 ** w.resonance;
 }
-export function rate(w: WorldState): number {
-  return w.helpers * w.power * 2 * multiplier(w);
+export function rate(w: WorldState, state?: State): number {
+  return (
+    w.helpers *
+    w.power *
+    2 *
+    multiplier(w) *
+    (state
+      ? productionBoost(state, state.worlds.indexOf(w)) * idleBoost(state)
+      : 1)
+  );
 }
 export function advance(state: State, seconds: number) {
-  for (let i = 0; i < (state.secret ? 8 : state.unlocked); i++) {
+  const elapsed = Number.isFinite(seconds)
+    ? Math.max(0, Math.min(seconds, 28800))
+    : 0;
+  for (let i = 0; i < state.worlds.length; i++) {
+    if (!worldAvailable(state, i)) continue;
     const w = state.worlds[i];
-    const gain = Math.max(0, Math.min(seconds, 28800)) * rate(w);
-    w.score += gain;
-    w.bank += gain;
+    credit(state, i, elapsed * rate(w, state));
   }
-  if (state.unlocked >= 3) rewardRenown(state, tickRpg(state.rpg, seconds));
+  if (state.unlocked >= 3) {
+    // Bound real time first; each sped-up battle clock gets the full offline interval.
+    const clocks = hasUpgrade(state, "expedition") ? 8 : 1;
+    for (let n = 0; n < clocks; n++)
+      rewardRenown(state, tickRpg(state.rpg, elapsed));
+  }
   unlock(state);
 }
 export function rewardRenown(state: State, amount: number): number {
   const gained =
-    Math.max(0, amount) * state.worlds[2].power * multiplier(state.worlds[2]);
-  state.worlds[2].score += gained;
-  state.worlds[2].bank += gained;
-  return gained;
+    Math.max(0, amount) *
+    state.worlds[2].power *
+    multiplier(state.worlds[2]) *
+    productionBoost(state, 2);
+  return credit(state, 2, gained);
 }
 export function rpgAction(state: State, action: RpgAction) {
   if (state.unlocked < 3) return null;
@@ -204,22 +534,26 @@ export function rpgAction(state: State, action: RpgAction) {
   return result;
 }
 export type Upgrade = "helper" | "power" | "resonance";
-export function price(w: WorldState, kind: Upgrade): number {
-  return kind === "helper"
-    ? helperCost(w)
-    : kind === "power"
-      ? powerCost(w)
-      : resonanceCost(w);
+export function price(w: WorldState, kind: Upgrade, state?: State): number {
+  const value =
+    kind === "helper"
+      ? helperCost(w)
+      : kind === "power"
+        ? powerCost(w)
+        : resonanceCost(w);
+  return Math.max(
+    1,
+    Math.floor(value * (state && hasUpgrade(state, "bargain") ? 0.2 : 1)),
+  );
 }
 export function purchase(state: State, i: number, kind: Upgrade): boolean {
   if (
-    i < 0 ||
-    i >= (state.secret ? 8 : state.unlocked) ||
+    !worldAvailable(state, i) ||
     !["helper", "power", "resonance"].includes(kind)
   )
     return false;
   const w = state.worlds[i],
-    cost = price(w, kind);
+    cost = price(w, kind, state);
   if (w.bank < cost || (kind === "resonance" && w.score < 250)) return false;
   w.bank -= cost;
   if (kind === "helper") w.helpers++;
@@ -271,17 +605,48 @@ export function loadState(raw: string | null): State {
   try {
     const s = JSON.parse(raw);
     const base = freshState();
-    if (!Array.isArray(s.worlds) || s.worlds.length !== 8) return base;
-    base.worlds = s.worlds.map((w: WorldState) => ({
-      score: safe(w.score, 1, 1e50),
-      helpers: Math.floor(safe(w.helpers, 0, 1000)),
-      power: Math.floor(safe(w.power, 1, 1000)),
-      bank: safe(w.bank, 0, 1e50),
-      resonance: Math.floor(safe(w.resonance, 0, 30)),
-    }));
+    if (
+      !Array.isArray(s.worlds) ||
+      ![8, 9].includes(s.worlds.length) ||
+      s.worlds.some((w: unknown) => !w || typeof w !== "object")
+    )
+      return base;
+    base.worlds = base.worlds.map((initial, i) => {
+      const w = s.worlds[i];
+      if (!w) return initial;
+      return {
+        score: safe(w.score, 1, 1e100),
+        helpers: Math.floor(safe(w.helpers, 0, 1000)),
+        power: Math.floor(safe(w.power, 1, 1000)),
+        bank: safe(w.bank, 0, 1e100),
+        resonance: Math.floor(safe(w.resonance, 0, 200)),
+      };
+    });
+    base.prestige.count = Math.floor(safe(s.prestige?.count, 0, 100));
+    base.prestige.shards = Math.floor(safe(s.prestige?.shards, 0, 2000));
+    // Keep only valid, earned branches, in dependency order.
+    const owned = Array.isArray(s.prestige?.upgrades)
+      ? s.prestige.upgrades
+      : [];
+    if (
+      base.prestige.count > 0 ||
+      (!s.prestige && s.secret === true && s.unlocked === 7)
+    )
+      base.prestige.upgrades.push("iridescent");
+    for (const node of PRESTIGE_UPGRADES) {
+      if (node.id === "iridescent") continue;
+      if (node.id === "void" && base.prestige.count >= 3)
+        base.prestige.upgrades.push(node.id);
+      else if (
+        owned.includes(node.id) &&
+        base.prestige.count >= node.at &&
+        hasUpgrade(base, node.needs)
+      )
+        base.prestige.upgrades.push(node.id);
+    }
     base.unlocked = Math.floor(safe(s.unlocked, 1, 7));
-    base.secret = s.secret === true && base.unlocked === 7;
-    base.won = s.won === true && total(base) >= GOAL;
+    base.secret = hasUpgrade(base, "iridescent");
+    base.won = s.won === true && total(base) >= gateGoal(base);
     base.saved =
       typeof s.saved === "number" && Number.isFinite(s.saved) && s.saved > 0
         ? Math.min(s.saved, Date.now())
@@ -311,7 +676,22 @@ function safe(n: unknown, fallback: number, max: number) {
     : fallback;
 }
 export function format(n: number | bigint): string {
+  if (typeof n === "bigint" && n >= 10n ** 30n) {
+    const digits = n.toString();
+    const lead = Number(digits.slice(0, 3)) / 100;
+    return (
+      (Math.floor(lead * 10) / 10).toFixed(1).replace(/\.0$/, "") +
+      "e" +
+      (digits.length - 1)
+    );
+  }
   const x = Number(n);
+  if (!Number.isFinite(x)) return "∞";
+  if (x >= 1e30)
+    return x
+      .toExponential(1)
+      .replace(/\.0e\+?/, "e")
+      .replace("e+", "e");
   if (x < 1000) return Math.floor(x).toLocaleString("en-US");
   const units = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc"];
   const tier = Math.min(Math.floor(Math.log10(x) / 3), units.length - 1);
@@ -319,5 +699,15 @@ export function format(n: number | bigint): string {
     (x / 1000 ** tier)
       .toFixed(x / 1000 ** tier >= 100 ? 0 : 1)
       .replace(/\.0$/, "") + units[tier]
+  );
+}
+export function log10(n: bigint): number {
+  const digits = n.toString();
+  return (
+    digits.length -
+    1 +
+    Math.log10(
+      Number(digits.slice(0, 15)) / 10 ** (Math.min(15, digits.length) - 1),
+    )
   );
 }

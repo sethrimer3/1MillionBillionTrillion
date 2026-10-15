@@ -1,0 +1,710 @@
+/* Charcoal, scratched paths, and little hand-drawn things that survive the gate. */
+.prestige-page {
+  max-width: 1150px;
+  margin: auto;
+}
+.gate-prestige-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 0 8px;
+  color: #a89cb6;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.gate-prestige-bar > span {
+  display: grid;
+  gap: 5px;
+}
+.gate-prestige-bar small {
+  color: #787587;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+.nav-item.prestige-ready {
+  color: #d9d1ae;
+}
+.nav-item.prestige-ready:after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: #bddfd0;
+  border-radius: 50%;
+  position: absolute;
+  top: 10px;
+  right: 13px;
+  box-shadow: 0 0 9px #b9dedb;
+}
+.door-inscription {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10px;
+  line-height: 1.05;
+  top: 27%;
+  height: 28%;
+  letter-spacing: 0.5px;
+}
+.gate-target-name {
+  font-family: var(--hand);
+  font-size: 25px;
+  line-height: 1.2;
+  color: #b5a69e;
+  text-align: center;
+  padding: 17px 8px 0;
+}
+.door-inscription b {
+  font-weight: 400;
+  color: #c5b292;
+}
+.door-inscription > span {
+  display: block;
+}
+.factor-crystal {
+  width: 20px;
+  height: 24px;
+  object-fit: contain;
+}
+.rebirth-panel {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 26px;
+  background:
+    radial-gradient(ellipse at 0 50%, #41404e55, transparent 60%), #191924;
+  border: 1px solid #48404e;
+  border-radius: 5px 8px 4px 6px;
+}
+.rebirth-art {
+  width: 100px;
+  height: 110px;
+  flex-shrink: 0;
+}
+.rebirth-copy {
+  flex: 1;
+  min-width: 0;
+}
+.rebirth-copy h2 {
+  font-family: var(--hand);
+  font-size: 28px;
+  line-height: 1.1;
+  color: #e2d9c5;
+  font-weight: 500;
+  margin: 9px 0 14px;
+}
+.rebirth-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  color: #a49caf;
+  font-size: 10px;
+}
+.rebirth-stats > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.rebirth-stats svg {
+  width: 13px;
+  height: 13px;
+  color: #c0cbb5;
+}
+.rebirth-panel .primary-button {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+.primary-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.tree-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 38px 0 23px;
+}
+.tree-heading h2 {
+  font-family: var(--hand);
+  font-weight: 500;
+  font-size: 28px;
+  color: #d0c6b9;
+  margin: 0;
+}
+.shard-balance {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #ac9dbb;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.shard-balance img {
+  width: 25px;
+  height: 30px;
+}
+.shard-balance b {
+  font-size: 23px;
+  font-weight: 500;
+  color: #e5d7f2;
+}
+.tree-root {
+  width: calc((100% - 40px) / 3);
+  margin: 0 auto;
+  position: relative;
+  padding-bottom: 29px;
+}
+.tree-root:after {
+  content: "";
+  position: absolute;
+  height: 25px;
+  width: 1px;
+  left: 50%;
+  bottom: 0;
+  border-left: 2px dashed #8b80725c;
+}
+.prestige-tree {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  border-top: 2px dashed #8b80724d;
+  padding-top: 20px;
+}
+.tree-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 22px;
+  position: relative;
+  min-width: 0;
+}
+.tree-branch:before {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: -20px;
+  bottom: 20px;
+  border-left: 2px dashed #8b807240;
+  z-index: 0;
+  pointer-events: none;
+  transform: rotate(0.2deg);
+}
+.tree-branch h3 {
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: #8b827e;
+  margin: 0 0 -6px;
+  padding-left: 10px;
+  background: #171822;
+  align-self: flex-start;
+  position: relative;
+  z-index: 1;
+}
+.tree-node {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 128px;
+  padding: 17px 13px;
+  background: #1e1e29;
+  border: 1px solid #403b4b;
+  border-radius: 5px 3px 7px 4px;
+  position: relative;
+}
+.tree-node:disabled {
+  cursor: default;
+}
+.tree-node.dormant {
+  background: #191b26;
+  border-color: #343441;
+}
+.tree-node.dormant .node-art {
+  opacity: 0.35;
+  filter: grayscale(0.8);
+}
+.tree-node.owned {
+  background: #24252c;
+  border-color: #6c7665;
+  box-shadow: inset 0 0 22px #8aaf7910;
+}
+.tree-node.purchasable {
+  border-color: #b9a27b;
+  background: #29262e;
+  box-shadow: 0 0 18px #bfae6b10;
+}
+.tree-node.purchasable:hover {
+  background: #353039;
+  transform: rotate(-0.3deg);
+}
+.node-art {
+  width: 40px;
+  flex-shrink: 0;
+}
+.node-art img {
+  width: 40px;
+  height: 48px;
+  object-fit: contain;
+}
+.node-copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+}
+.node-copy small {
+  color: #8e859b;
+  font-size: 8px;
+  letter-spacing: 1px;
+  line-height: 1.5;
+}
+.node-copy strong {
+  font-family: var(--hand);
+  font-size: 23px;
+  font-weight: 500;
+  line-height: 1;
+  color: #c9bfbe;
+}
+.node-copy > span {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #8d8997;
+}
+.node-copy em {
+  font-size: 8px;
+  line-height: 1.5;
+  color: #706a7c;
+  font-style: normal;
+}
+.owned .node-copy small {
+  color: #a3bc9b;
+}
+.purchasable .node-copy small {
+  color: #d3b97f;
+}
+.owned .node-copy strong,
+.purchasable .node-copy strong {
+  color: #e5dac5;
+}
+.node-price {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  color: #c2a979;
+  flex-shrink: 0;
+}
+.node-price svg {
+  width: 12px;
+  height: 12px;
+}
+.owned .node-price {
+  color: #a3bc9b;
+}
+.dormant .node-price {
+  color: #656175;
+}
+.next-threshold {
+  display: grid;
+  gap: 10px;
+  text-align: center;
+  padding: 38px 10px 20px;
+  color: #8f859d;
+  font-family: var(--hand);
+  font-size: 23px;
+}
+.next-threshold .eyebrow {
+  font-family: "DM Sans", sans-serif;
+  font-size: 9px;
+  color: #766e82;
+}
+.prestige-confirm {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.prestige-confirm > img {
+  width: 100px;
+  height: 108px;
+  margin-bottom: 15px;
+}
+.prestige-confirm h2 {
+  margin: 12px 0;
+  font-family: var(--hand);
+  font-size: 42px;
+  font-weight: 500;
+}
+.prestige-payout {
+  font-size: 35px;
+  color: #d7c3e8;
+}
+.prestige-payout small {
+  font-size: 13px;
+}
+.prestige-confirm p {
+  color: #a49aac;
+  font-size: 12px;
+  line-height: 1.9;
+  margin: 20px 0;
+}
+.awakening-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #c4cdbb;
+  font-size: 12px;
+  margin-bottom: 24px;
+}
+.awakening-preview img {
+  width: 34px;
+  height: 42px;
+}
+.ending-scene > .text-action {
+  margin: 15px auto 0;
+}
+/* Rough faceted cave, clickable refractions, and an ink-black gravity well. */
+.activity-7 {
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    #475267,
+    #272b3e 65%,
+    #1d202d
+  );
+  border-color: #676078;
+}
+.crystal-cave {
+  position: absolute;
+  inset: 0;
+  background: #171c2e;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    91% 84%,
+    85% 95%,
+    78% 78%,
+    70% 97%,
+    19% 95%,
+    11% 78%,
+    4% 92%,
+    0 84%,
+    0 12%,
+    13% 29%,
+    17% 0,
+    23% 19%,
+    32% 1%,
+    43% 14%,
+    50% 0,
+    64% 17%,
+    77% 0,
+    87% 24%,
+    92% 0
+  );
+  opacity: 0.75;
+}
+.prism-heart {
+  left: 50%;
+  top: 40%;
+  width: 145px;
+  height: 175px;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 30px #bce3db55);
+}
+.prism-heart img {
+  width: 100%;
+  height: 100%;
+}
+.crystal-rays {
+  position: absolute;
+  width: 440px;
+  height: 440px;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(
+    from 15deg,
+    transparent 0deg 40deg,
+    #f1b8c01a 40deg 60deg,
+    transparent 60deg 150deg,
+    #dfce9d1a 150deg 175deg,
+    transparent 175deg 265deg,
+    #aed6e51a 265deg 300deg,
+    transparent 300deg
+  );
+  border-radius: 50%;
+  transition: rotate 0.4s;
+}
+.crystal-rays.phase-1 {
+  rotate: 35deg;
+}
+.crystal-rays.phase-2 {
+  rotate: -35deg;
+}
+.refraction-beams {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  position: absolute;
+  bottom: 16%;
+  left: 12%;
+  right: 12%;
+}
+.refraction {
+  background: #272e40;
+  border: 1px solid #67637a;
+  border-radius: 50% 46% 48% 44%;
+  width: 64px;
+  height: 64px;
+  position: relative;
+}
+.refraction img {
+  width: 43px;
+  height: 48px;
+}
+.refraction > span {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  right: 0;
+  color: #9f98ae;
+}
+.refraction.aligned {
+  background: #4d485b;
+  border-color: #dfd3bb;
+  box-shadow: 0 0 20px #c8dacf33;
+}
+.crystal-chain {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  font-family: var(--hand);
+  font-size: 27px;
+  color: #c9d6cd;
+}
+.activity-8 {
+  background: radial-gradient(ellipse at 50% 44%, #30223f, #151322 65%);
+  border-color: #5a456b;
+}
+.void-heart {
+  width: 155px;
+  height: 175px;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 24px #9c62c540);
+}
+.void-heart img {
+  width: 100%;
+  height: 100%;
+}
+.void-heart.unstable {
+  filter: drop-shadow(0 0 35px #b17bea99);
+  animation: void-throb 1s steps(3) infinite;
+}
+.void-orbit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+.void-orbit i {
+  position: absolute;
+  top: 44%;
+  width: 28px;
+  height: 28px;
+  transform: rotate(var(--orbit)) translateY(-130px);
+  opacity: 0.12;
+}
+.void-orbit i.fed {
+  opacity: 1;
+  filter: drop-shadow(0 0 10px #ab88cf);
+}
+.void-orbit img {
+  width: 28px;
+  height: 28px;
+}
+.void-collapse {
+  position: absolute;
+  bottom: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid #9570ad;
+  border-radius: 3px 7px 4px 5px;
+  color: #d6b5ec;
+  background: #34203f;
+  padding: 12px 24px;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+.void-collapse:disabled {
+  color: #7f718d;
+  background: #211c2c;
+  border-color: #493753;
+  cursor: default;
+}
+.activity-7 .scene-helpers,
+.activity-8 .scene-helpers {
+  bottom: 12px;
+  left: 12px;
+  right: auto;
+}
+.world-card-7 .card-biome {
+  background: radial-gradient(ellipse at 50% 70%, #535865, #292c40);
+}
+.world-card-8 .card-biome {
+  background: radial-gradient(ellipse at 50% 65%, #423052, #1a1828);
+}
+.world-card.locked .card-sprite {
+  filter: brightness(0.25) grayscale(1);
+}
+.world-title-gem .sprite {
+  width: 25px;
+  height: 32px;
+}
+@keyframes void-throb {
+  50% {
+    filter: drop-shadow(0 0 48px #c08bdfbb);
+  }
+}
+@media (max-width: 1150px) {
+  .tree-node {
+    gap: 8px;
+    padding: 13px 10px;
+  }
+  .node-art,
+  .node-art img {
+    width: 30px;
+  }
+  .node-copy strong {
+    font-size: 21px;
+  }
+  .rebirth-panel {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 800px) {
+  .tree-root {
+    width: 100%;
+    max-width: 420px;
+  }
+  .prestige-tree {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+    border: 0;
+    padding-top: 4px;
+  }
+  .tree-branch {
+    gap: 16px;
+  }
+  .tree-branch:before {
+    left: 30px;
+  }
+  .tree-node {
+    min-height: 106px;
+    padding: 17px;
+    gap: 17px;
+  }
+  .node-art,
+  .node-art img {
+    width: 40px;
+  }
+  .node-copy strong {
+    font-size: 25px;
+  }
+  .node-copy > span {
+    font-size: 11px;
+  }
+  .node-copy em {
+    font-size: 9px;
+  }
+  .tree-branch h3 {
+    margin: 0;
+  }
+}
+@media (max-width: 650px) {
+  .rebirth-panel {
+    gap: 15px;
+    padding: 18px;
+  }
+  .rebirth-art {
+    width: 62px;
+    height: 85px;
+  }
+  .rebirth-copy h2 {
+    font-size: 23px;
+  }
+  .rebirth-panel .primary-button {
+    width: 100%;
+    justify-content: center;
+  }
+  .tree-heading {
+    margin: 28px 0 18px;
+  }
+  .tree-heading h2 {
+    font-size: 25px;
+  }
+  .shard-balance {
+    gap: 4px;
+    font-size: 9px;
+  }
+  .shard-balance b {
+    font-size: 20px;
+  }
+  .gate-prestige-bar {
+    padding: 14px 0 4px;
+    font-size: 10px;
+  }
+  .gate-prestige-bar .text-action {
+    font-size: 10px;
+  }
+  .bottom-dock {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .bottom-dock .nav-item {
+    width: 25%;
+  }
+  .door-inscription {
+    font-size: 8px;
+    gap: 2px;
+    top: 26%;
+    line-height: 1;
+  }
+  .gate-target-name {
+    font-size: 21px;
+  }
+  .prism-heart {
+    width: 125px;
+    height: 145px;
+    top: 38%;
+  }
+  .refraction-beams {
+    gap: 22px;
+    bottom: 18%;
+  }
+  .refraction {
+    width: 58px;
+    height: 58px;
+  }
+  .void-heart {
+    width: 120px;
+    height: 145px;
+  }
+  .void-orbit i {
+    transform: rotate(var(--orbit)) translateY(-100px);
+  }
+}
+
+@media (max-width: 370px) {
+  .world-tabs > button {
+    width: 28px;
+    flex-shrink: 1;
+    padding: 3px;
+  }
+}

@@ -69,10 +69,10 @@ test("first world, uninterrupted unlock, helpers, relics, and save reload", asyn
   await page.getByRole("button", { name: "Close", exact: true }).click();
   expect(errors).toEqual([]);
 });
-test("all eight worlds, regrowing crops, resonance, and the torch secret", async ({
+test("eight migrated worlds, regrowing crops, resonance, and torch ambience", async ({
   page,
 }) => {
-  await withSave(page, seed());
+  await withSave(page, { ...seed(), secret: true });
   await page.goto("/");
   await page.getByRole("button", { name: "Extinguish left torch" }).click();
   await page.getByRole("button", { name: "Extinguish right torch" }).click();
@@ -203,7 +203,7 @@ test("navigation and layouts fit narrow screens without horizontal scrolling", a
   await page.goto("/");
   for (const width of [320, 360, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const route of ["gate", "worlds", "world/0", "relics"]) {
+    for (const route of ["gate", "worlds", "world/0", "relics", "prestige"]) {
       await page.goto("/#" + route);
       await expect(page.locator("#screen")).toBeVisible();
       expect(

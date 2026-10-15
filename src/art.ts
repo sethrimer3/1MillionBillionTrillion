@@ -5,6 +5,8 @@ export function uiIcon(name: string, cls = ""): string {
     gate: '<path d="M5 21V10a7 7 0 0 1 14 0v11Zm4 0V10a3 3 0 0 1 6 0v11m-3-13v13M3 21h18"/>',
     worlds:
       '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    prestige:
+      '<path d="M19 8a8 8 0 1 0 1 8M19 3v6h-6m-1 1-3 4h4l-1 4 4-5h-4Z"/>',
     relics:
       '<path d="m5 8 7-5 7 5v9l-7 4-7-4Zm0 0 7 4 7-4m-7 4v9m-7-4 7-5 7 5"/>',
     settings:
