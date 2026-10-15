@@ -24,10 +24,14 @@ Browser tests use system Chromium when available. Otherwise, run `npx playwright
 
 - `src/main.ts`: application navigation, activities, settings, and UI feedback.
 - `src/game.ts`: progression, purchases, save migration, and discoveries.
+- `src/rpg.ts`: saved RPG combat, regions, equipment, companions, quests, and automatic battles.
+- `src/rpg-view.ts`: the yellow world's battles, inventory, map, and character views.
+- `src/rpg.css`: illustrated RPG scenery and in-game panels.
 - `src/art.ts`: sprite presentation and environmental artwork.
 - `src/style.css`: app layout, world scenery, and sprite animations.
-- `public/sprites/`: original raster artwork, including three-frame flame animations.
+- `public/sprites/`: original hand-drawn RPG doodles and raster artwork, including three-frame flame animations.
 - `scripts/draw_sprites.py`: reproducible sprite sources; run with Python 3, no packages needed.
+- `scripts/draw_rpg_sprites.py`: reproducible RPG characters, enemies, props, and equipment; Python 3, no packages needed.
 - `vite.config.ts`: production asset caching and service-worker generation.
 
 Existing `mbt-save-v1` saves migrate in place. Progress remains local to the browser; export/import is available in Settings. Assets and fonts are bundled locally. The production app works offline after its first completed load; processes and offline caches are independent of gameplay saves.

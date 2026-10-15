@@ -83,6 +83,12 @@ test("all eight worlds, regrowing crops, resonance, and the torch secret", async
   for (const i of [0, 1, 2, 3, 4, 5, 7]) {
     await page.goto("/#world/" + i);
     const before = await savedScore(page, i);
+    if (i === 2) {
+      while (await page.locator("#rpg-enemy").count())
+        await page.locator(".chosen-command").click();
+      expect(await savedScore(page, i)).toBeGreaterThan(before);
+      continue;
+    }
     const target =
       i === 1
         ? page
@@ -155,24 +161,20 @@ test("settings, save export and recovery, and offline relaunch", async ({
   expect(download.suggestedFilename()).toBe(
     "million-billion-trillion-save.json",
   );
-  await page
-    .locator("#save-file")
-    .setInputFiles({
-      name: "broken.json",
-      mimeType: "application/json",
-      buffer: Buffer.from("{bad"),
-    });
+  await page.locator("#save-file").setInputFiles({
+    name: "broken.json",
+    mimeType: "application/json",
+    buffer: Buffer.from("{bad"),
+  });
   await expect(page.locator("#toast")).toContainText(
     "That save could not be read",
   );
   const fixture = seed(123);
-  await page
-    .locator("#save-file")
-    .setInputFiles({
-      name: "save.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(fixture)),
-    });
+  await page.locator("#save-file").setInputFiles({
+    name: "save.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(fixture)),
+  });
   await expect(page.locator("#modal")).not.toBeVisible();
   expect(await savedScore(page, 0)).toBe(123);
   await page.evaluate(async () => {

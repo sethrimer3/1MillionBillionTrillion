@@ -25,6 +25,7 @@ import {
   type Upgrade,
 } from "./game";
 import { sprite, uiIcon, gem, scenery, torch } from "./art";
+import { mountRpg, type RpgController } from "./rpg-view";
 
 type View = "gate" | "worlds" | "world" | "relics";
 type Play = {
@@ -53,6 +54,7 @@ const elapsed = Math.max(0, Math.min(28800, (Date.now() - state.saved) / 1000));
 advance(state, elapsed);
 let view: View = "gate";
 let current = 0;
+let rpgController: RpgController | undefined;
 let showExact = false;
 let lit = [true, true];
 let sceneKey = "";
@@ -66,7 +68,7 @@ const plays: (Play | undefined)[] = [];
 const helpers = [
   "gnome",
   "gnome",
-  "flower-gold",
+  "gnome",
   "snail",
   "duck",
   "moth",
@@ -76,7 +78,7 @@ const helpers = [
 const upgradeNames = [
   "Kindling",
   "Garden gloves",
-  "Sun catcher",
+  "Renown charm",
   "Watering can",
   "Rain dance",
   "Wishing stone",
@@ -262,6 +264,7 @@ function renderView(): void {
           ? "Little worlds"
           : "The collection";
   document.querySelector("#header-location")!.innerHTML = `<i></i>${name}`;
+  rpgController = undefined;
   const screen = document.querySelector<HTMLElement>("#screen")!;
   screen.innerHTML =
     view === "gate"
@@ -330,7 +333,18 @@ function worldsScreen(): string {
 }
 function worldScreen(): string {
   const w = WORLDS[current];
-  return `<section class="world-page" style="--world:${w.color}" data-world-page="${current}"><div class="world-nav"><button class="text-action" data-route="worlds">${uiIcon("back")} Worlds</button><div class="world-tabs" aria-label="World shortcuts">${WORLDS.map((x, i) => `<button class="${i === current ? "active" : ""} ${available(i) ? "" : "locked"}" data-world="${i}" aria-label="${available(i) ? x.name : "Locked world"}" ${i === current ? 'aria-current="page"' : ""}>${sprite(i === 7 && !state.secret ? "lock" : x.kind)}</button>`).join("")}</div><span class="world-index">${String(current + 1).padStart(2, "0")} / 08</span></div><div class="screen-heading world-heading"><div><div class="eyebrow"><span class="tiny-diamond"></span> ${current === 7 ? "SOMETHING ELSE" : ["VERMILION", "AMBER", "GOLD", "FERN", "SKY", "INDIGO", "VIOLET"][current]}</div><h1>${w.name}<span class="world-title-gem">${current < 7 ? gem(current, true) : uiIcon("star")}</span></h1></div><div class="chapter-mark"><span>${w.noun.toUpperCase()}</span><strong id="world-score">${format(state.worlds[current].score)}</strong></div></div><div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${multiplier(state.worlds[current])}</span></div><div class="world-milestones">${[100, 1000, 10000].map((n) => `<div class="milestone ${state.worlds[current].score >= n ? "achieved" : ""}" data-milestone="${n}">${sprite(state.worlds[current].score >= n ? "coin" : "lock")}<span>${format(n)}</span></div>`).join("")}</div></div><aside class="world-shop"><div class="pocket-bar">${uiIcon("bag")}<span>Pocket</span><strong id="world-bank">${format(state.worlds[current].bank)}</strong></div><div class="shop-heading"><h2>A little more.</h2><span id="world-rate">${format(rate(state.worlds[current]))}/s</span></div>${shopRow("helper", w.auto, helpers[current])}${shopRow("power", upgradeNames[current], "glove")}${shopRow("resonance", "Resonance", "rune")}<div class="world-total"><span>THE WHOLE OF IT</span><strong id="world-total">${format(total(state))}</strong><div id="world-equation">${factors()}</div></div></aside></div></section>`;
+  const header = `<section class="world-page" style="--world:${w.color}" data-world-page="${current}"><div class="world-nav"><button class="text-action" data-route="worlds">${uiIcon("back")} Worlds</button><div class="world-tabs" aria-label="World shortcuts">${WORLDS.map((x, i) => `<button class="${i === current ? "active" : ""} ${available(i) ? "" : "locked"}" data-world="${i}" aria-label="${available(i) ? x.name : "Locked world"}" ${i === current ? 'aria-current="page"' : ""}>${sprite(i === 7 && !state.secret ? "lock" : x.kind)}</button>`).join("")}</div><span class="world-index">${String(current + 1).padStart(2, "0")} / 08</span></div><div class="screen-heading world-heading"><div><div class="eyebrow"><span class="tiny-diamond"></span> ${current === 7 ? "SOMETHING ELSE" : ["VERMILION", "AMBER", "GOLD", "FERN", "SKY", "INDIGO", "VIOLET"][current]}</div><h1>${w.name}<span class="world-title-gem">${current < 7 ? gem(current, true) : uiIcon("star")}</span></h1></div><div class="chapter-mark"><span>${w.noun.toUpperCase()}</span><strong id="world-score">${format(state.worlds[current].score)}</strong></div></div>`;
+  return (
+    header +
+    (current === 2
+      ? `<div class="rpg-layout"><div id="rpg-host"></div>${worldShop()}</div>`
+      : `<div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${multiplier(state.worlds[current])}</span></div><div class="world-milestones">${[100, 1000, 10000].map((n) => `<div class="milestone ${state.worlds[current].score >= n ? "achieved" : ""}" data-milestone="${n}">${sprite(state.worlds[current].score >= n ? "coin" : "lock")}<span>${format(n)}</span></div>`).join("")}</div></div>${worldShop()}</div>`) +
+    "</section>"
+  );
+}
+function worldShop(): string {
+  const w = WORLDS[current];
+  return `<aside class="world-shop"><div class="pocket-bar">${uiIcon("bag")}<span>Pocket</span><strong id="world-bank">${format(state.worlds[current].bank)}</strong></div><div class="shop-heading"><h2>A little more.</h2><span id="world-rate">${format(rate(state.worlds[current]))}/s</span></div>${shopRow("helper", w.auto, helpers[current])}${shopRow("power", upgradeNames[current], "glove")}${shopRow("resonance", "Resonance", "rune")}<div class="world-total"><span>THE WHOLE OF IT</span><strong id="world-total">${format(total(state))}</strong><div id="world-equation">${factors()}</div></div></aside>`;
 }
 function shopRow(kind: Upgrade, label: string, image: string): string {
   const w = state.worlds[current],
@@ -357,8 +371,6 @@ function activity(): string {
         return `<button class="plot ${ready ? "ripe" : "growing"} ${golden ? "golden" : ""}" data-tap="${n}" aria-label="${golden ? "Golden carrot" : ready ? "Harvest carrot" : "Sprout"}">${sprite("soil", "plot-soil")}${sprite(ready ? (golden ? "gold-carrot" : "carrot") : "sprout", "plot-plant")}<span class="plot-shadow"></span></button>`;
       })
       .join("")}</div>`;
-  if (i === 2)
-    body = `<div class="sun-hills hill-back"></div><div class="sun-hills hill-front"></div><div class="sun-cloud cloud-a"></div><div class="sun-cloud cloud-b"></div><div class="sun-window"><i></i><i></i></div><button class="sun-orbit" data-tap="0" aria-label="Catch a sunbeam"><span class="sky-sun">${sprite("sun")}</span></button><div class="sun-flowers">${sprite("flower-gold")}${sprite("flower-gold")}${sprite("flower-gold")}</div>`;
   if (i === 3)
     body = `<div class="moss-rain"></div><div class="moss-ground"></div><div class="plant-pot"><div class="pot-dirt"></div></div><button class="sprite-target growing-plant growth-${p.growth}" data-tap="0" aria-label="Water the plant">${sprite(p.growth >= 4 ? "flower" : p.growth >= 2 ? "leaf" : "sprout")}<span class="water-drop"></span></button><div class="moss-stones"></div>`;
   if (i === 4)
@@ -413,7 +425,7 @@ function activityStatus(): string {
     : current === 1
       ? "THE PATCH"
       : current === 2
-        ? "GOLDEN HOUR"
+        ? "ON THE TRAIL"
         : current === 3
           ? p.growth === 4
             ? "IN BLOOM"
@@ -454,7 +466,7 @@ function activityKey(): string {
   );
 }
 function updateScene(force = false): void {
-  if (view !== "world") return;
+  if (view !== "world" || current === 2) return;
   const key = activityKey();
   if (!force && key === sceneKey) return;
   const container = document.querySelector<HTMLDivElement>("#playground");
@@ -500,18 +512,6 @@ function tap(target: number, event: MouseEvent): void {
     if (gold) {
       word = "GOLDEN";
       earn("harvest");
-    }
-  }
-  if (i === 2) {
-    const phase =
-      document
-        .querySelector(".sky-sun")
-        ?.getAnimations()[0]
-        ?.effect?.getComputedTiming().progress ?? 0.5;
-    bonus = Math.abs(phase - 0.5) < 0.12 ? 6 : 1;
-    if (bonus > 1) {
-      word = "PERFECT";
-      earn("perfect");
     }
   }
   if (i === 3) {
@@ -708,6 +708,28 @@ function bindView(): void {
     document
       .querySelectorAll<HTMLElement>(".relic-dot")
       .forEach((e) => (e.hidden = true));
+  if (view === "world" && current === 2) {
+    rpgController = mountRpg(
+      document.querySelector<HTMLElement>("#rpg-host")!,
+      () => state,
+      {
+        changed: (result, event) => {
+          if (result?.levelUp)
+            toast("Level " + state.rpg.level, "A LITTLE STRONGER", "rpg-hero");
+          if (result?.damage && event)
+            floating(
+              event,
+              "−" + result.damage,
+              result.victory ? "VICTORY" : "",
+            );
+          if (result?.changed) chime(result.victory ? 3 : 1, !result.victory);
+          checkDiscoveries();
+          save();
+          update();
+        },
+      },
+    );
+  }
   updateScene();
   updateGateDarkness();
 }
@@ -742,6 +764,7 @@ function openWorld(i: number, e?: MouseEvent): void {
   if (e) bump(e);
 }
 function update(): void {
+  rpgController?.update();
   const n = total(state);
   const text = (id: string, value: string) => {
     const e = document.getElementById(id);
@@ -851,7 +874,7 @@ function modal(html: string): HTMLDialogElement {
 }
 function showSettings(): void {
   const d = modal(
-    `<div class="eyebrow">PREFERENCES</div><h2 id="modal-title">Make yourself at home.</h2><div class="setting-list"><button class="setting-row" id="setting-sound">${uiIcon("sound")}<span>Sound</span><span class="toggle ${state.sound ? "on" : ""}" aria-hidden="true"></span></button><button class="setting-row" id="setting-motion">${uiIcon("star")}<span>Motion</span><span class="toggle ${state.motion ? "on" : ""}" aria-hidden="true"></span></button><button class="setting-row" id="fullscreen">${uiIcon("full")}<span>Full screen</span>${uiIcon("arrow")}</button>${deferredInstall ? `<button class="setting-row" id="install-app">${uiIcon("download")}<span>Install game</span>${uiIcon("arrow")}</button>` : ""}</div><div class="settings-divider"></div><div class="save-actions"><button class="secondary-button" id="export-save">${uiIcon("download")}Export save</button><button class="secondary-button" id="import-save">${uiIcon("upload")}Import save</button><input id="save-file" type="file" accept="application/json,.json" hidden/></div><button class="reset-button" id="reset-save">Start over</button><div class="settings-version">MILLION BILLION TRILLION <span>v0.2</span></div>`,
+    `<div class="eyebrow">PREFERENCES</div><h2 id="modal-title">Make yourself at home.</h2><div class="setting-list"><button class="setting-row" id="setting-sound">${uiIcon("sound")}<span>Sound</span><span class="toggle ${state.sound ? "on" : ""}" aria-hidden="true"></span></button><button class="setting-row" id="setting-motion">${uiIcon("star")}<span>Motion</span><span class="toggle ${state.motion ? "on" : ""}" aria-hidden="true"></span></button><button class="setting-row" id="fullscreen">${uiIcon("full")}<span>Full screen</span>${uiIcon("arrow")}</button>${deferredInstall ? `<button class="setting-row" id="install-app">${uiIcon("download")}<span>Install game</span>${uiIcon("arrow")}</button>` : ""}</div><div class="settings-divider"></div><div class="save-actions"><button class="secondary-button" id="export-save">${uiIcon("download")}Export save</button><button class="secondary-button" id="import-save">${uiIcon("upload")}Import save</button><input id="save-file" type="file" accept="application/json,.json" hidden/></div><button class="reset-button" id="reset-save">Start over</button><div class="settings-version">MILLION BILLION TRILLION <span>v0.3</span></div>`,
   );
   const wireToggle = (id: string, key: "sound" | "motion") => {
     const b = d.querySelector<HTMLButtonElement>(id)!;

@@ -27,7 +27,7 @@ export function uiIcon(name: string, cls = ""): string {
   return svg(paths[name] || paths.star, cls);
 }
 export const sprite = (name: string, cls = "", alt = "") =>
-  `<img class="sprite ${cls}" src="${import.meta.env.BASE_URL}sprites/${name}.png" alt="${alt}" draggable="false" width="48" height="48"/>`;
+  `<img class="sprite ${cls}" src="${import.meta.env.BASE_URL}sprites/${name}.${name.startsWith("rpg-") ? "svg" : "png"}" alt="${alt}" draggable="false" width="48" height="48"/>`;
 export function gem(i: number, lit: boolean, cls = "") {
   const colors = [
     "#e9877b",

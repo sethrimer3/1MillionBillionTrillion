@@ -1,3 +1,11 @@
+import {
+  createRpg,
+  restoreRpg,
+  tickRpg,
+  act,
+  type RpgState,
+  type RpgAction,
+} from "./rpg.ts";
 export const GOAL = 10n ** 27n;
 export const SAVE_KEY = "mbt-save-v1";
 export const WORLDS = [
@@ -26,14 +34,14 @@ export const WORLDS = [
     unlock: 10n,
   },
   {
-    name: "Pocket sunshine",
-    title: "Catch a little sunshine.",
+    name: "Pocket kingdoms",
+    title: "A world beyond the canvas.",
     color: "#dfbd46",
     pale: "#faf2cc",
-    kind: "sun",
-    noun: "sunbeams",
-    action: "Catch a sunbeam",
-    auto: "Sunflower friend",
+    kind: "rpg-sword-gold",
+    noun: "renown",
+    action: "Strike",
+    auto: "Trail companion",
     desc: "For a brighter kind of day.",
     unlock: 100n,
   },
@@ -115,6 +123,7 @@ export type State = {
   sound: boolean;
   motion: boolean;
   relics: string[];
+  rpg: RpgState;
 };
 export function freshState(): State {
   return {
@@ -133,6 +142,7 @@ export function freshState(): State {
     sound: false,
     motion: true,
     relics: [],
+    rpg: createRpg(),
   };
 }
 export function total(state: State): bigint {
@@ -170,7 +180,28 @@ export function advance(state: State, seconds: number) {
     w.score += gain;
     w.bank += gain;
   }
+  if (state.unlocked >= 3) rewardRenown(state, tickRpg(state.rpg, seconds));
   unlock(state);
+}
+export function rewardRenown(state: State, amount: number): number {
+  const gained =
+    Math.max(0, amount) * state.worlds[2].power * multiplier(state.worlds[2]);
+  state.worlds[2].score += gained;
+  state.worlds[2].bank += gained;
+  return gained;
+}
+export function rpgAction(state: State, action: RpgAction) {
+  if (state.unlocked < 3) return null;
+  const result = act(state.rpg, action);
+  if (result.changed) {
+    rewardRenown(state, result.renown);
+    if (
+      ["attack", "guard", "stroke", "heal", "nova", "potion"].includes(action)
+    )
+      state.clicks++;
+    unlock(state);
+  }
+  return result;
 }
 export type Upgrade = "helper" | "power" | "resonance";
 export function price(w: WorldState, kind: Upgrade): number {
@@ -203,7 +234,7 @@ export const RELICS = [
   { id: "million", name: "Six zeroes", sprite: "coin" },
   { id: "roaring", name: "Wild at heart", sprite: "flame" },
   { id: "harvest", name: "Golden roots", sprite: "gold-carrot" },
-  { id: "perfect", name: "Right on time", sprite: "sun" },
+  { id: "perfect", name: "A kingdom in your pocket", sprite: "rpg-crown" },
   { id: "bloom", name: "Something grew", sprite: "flower" },
   { id: "storm", name: "Silver lining", sprite: "storm" },
   { id: "constellation", name: "Written in stars", sprite: "moon" },
@@ -231,6 +262,7 @@ export function discoveries(state: State): string[] {
     state.secret && "secret",
     state.worlds.reduce((n, w) => n + w.helpers, 0) >= 10 && "crowd",
     state.won && "answer",
+    state.rpg.cleared > 0 && "perfect",
   ];
   return candidates.filter((id): id is string => !!id && discover(state, id));
 }
@@ -257,6 +289,7 @@ export function loadState(raw: string | null): State {
     base.clicks = safe(s.clicks, 0, 1e12);
     base.sound = s.sound === true;
     base.motion = s.motion !== false;
+    base.rpg = restoreRpg(s.rpg);
     base.relics = Array.isArray(s.relics)
       ? [
           ...new Set<string>(
