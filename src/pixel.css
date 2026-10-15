@@ -1,0 +1,378 @@
+/* One pixel face for the entire game, including native controls and dialogs. */
+html,
+body,
+button,
+input,
+select,
+textarea,
+dialog {
+  font-family: var(--pixel);
+}
+h1,
+.world-heading h1 {
+  font-size: 32px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+.screen-heading {
+  gap: 18px;
+}
+.screen-heading > div:first-child {
+  min-width: 0;
+}
+.world-heading h1 {
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.world-heading .chapter-mark {
+  flex-shrink: 0;
+}
+.world-card-info h2 {
+  font-size: 20px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.world-card-bottom > span:first-child {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.world-card-bottom small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+}
+.world-number {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.world-number .gem,
+.world-number .factor-crystal {
+  width: 18px;
+  height: 23px;
+}
+.dormant-crystal {
+  filter: grayscale(1) brightness(0.4);
+}
+.upgrade-name {
+  min-width: 0;
+}
+.upgrade-name strong {
+  white-space: normal;
+  font-size: 17px;
+  line-height: 1.2;
+}
+.mini-world strong {
+  font-size: 16px;
+  line-height: 1.25;
+  white-space: normal;
+}
+.shelf-heading h2 {
+  font-size: 20px;
+}
+.tree-heading h2 {
+  font-size: 22px;
+}
+.node-copy strong {
+  font-size: 19px;
+  line-height: 1.2;
+}
+.node-copy > span {
+  font-size: 11px;
+}
+.rebirth-copy h2 {
+  font-size: 21px;
+  line-height: 1.4;
+}
+.gate-target-name,
+.next-threshold {
+  font-size: 19px;
+  line-height: 1.4;
+}
+.activity-corner {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.activity-corner .ui-icon,
+.spectrum-line .ui-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.6;
+}
+.crystal-chain > .sprite {
+  width: 34px;
+  height: 38px;
+}
+.refraction > span {
+  display: flex;
+  justify-content: center;
+}
+.refraction > span .ui-icon {
+  width: 17px;
+  height: 17px;
+}
+.foe-label > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 22px;
+}
+.foe-label .boss-crown {
+  width: 24px;
+  height: 24px;
+}
+.hero-name > strong {
+  font-size: 18px;
+}
+.paper-heading h3,
+.camp-banner h3 {
+  font-size: 23px;
+  line-height: 1.3;
+}
+.character-stats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.character-stats .sprite {
+  width: 22px;
+  height: 22px;
+}
+.companion > i .ui-icon,
+.map-number .ui-icon,
+.map-region > i .ui-icon {
+  width: 18px;
+  height: 18px;
+}
+.attribute-row .rpg-button .ui-icon {
+  width: 18px;
+  height: 18px;
+}
+.encounter-card h3 {
+  font-size: 25px;
+  line-height: 1.3;
+}
+@media (max-width: 650px) {
+  h1,
+  .world-heading h1 {
+    font-size: 24px;
+  }
+  .world-heading h1 {
+    max-width: 240px;
+  }
+  .world-heading .chapter-mark strong {
+    font-size: 24px;
+  }
+  .world-heading .chapter-mark > span {
+    font-size: 9px;
+    letter-spacing: 0.5px;
+  }
+  .world-card-info h2 {
+    font-size: 17px;
+  }
+  .mini-world strong {
+    font-size: 13px;
+  }
+  .shelf-heading h2 {
+    font-size: 17px;
+  }
+  .shelf-heading h2 > span {
+    font-size: 10px;
+    margin-left: 6px;
+  }
+  .rebirth-copy h2 {
+    font-size: 17px;
+  }
+  .tree-heading h2 {
+    font-size: 18px;
+  }
+  .node-copy strong {
+    font-size: 19px;
+  }
+  .node-copy small {
+    letter-spacing: 0.5px;
+  }
+  .gate-target-name,
+  .next-threshold {
+    font-size: 16px;
+  }
+  .hero-name > strong {
+    font-size: 15px;
+  }
+  .paper-heading h3,
+  .camp-banner h3 {
+    font-size: 19px;
+  }
+  .foe-label > span {
+    font-size: 17px;
+  }
+  .encounter-card h3 {
+    font-size: 21px;
+  }
+}
+@media (max-width: 370px) {
+  .world-heading h1 {
+    font-size: 21px;
+    max-width: 198px;
+  }
+  .world-card-info h2 {
+    font-size: 15px;
+  }
+  .tree-heading h2 {
+    font-size: 16px;
+  }
+}
+
+/* Filled-in scenery: real drawings in place of plain geometric props. */
+.sky-moon {
+  background: url("/sprites/moon.png") center / contain no-repeat;
+  opacity: 0.18;
+  box-shadow: none;
+}
+.sky-moon:before {
+  content: none;
+}
+.camp-mountains {
+  background: url("/sprites/scene-mountains.svg") center bottom / 100% 100%
+    no-repeat;
+  clip-path: none;
+}
+.fire-log {
+  background: url("/sprites/scene-log.svg") center / contain no-repeat;
+  width: 65px;
+  height: 34px;
+  border: 0;
+}
+.garden-fence {
+  height: 88px;
+  inset: 15% 0 auto;
+  border: 0;
+  background: url("/sprites/scene-fence.svg") center / auto 88px repeat-x;
+  opacity: 0.75;
+}
+.plant-pot {
+  background: url("/sprites/scene-pot.svg") center / contain no-repeat;
+  border: 0;
+  clip-path: none;
+  height: 76px;
+  width: 118px;
+  top: 62%;
+}
+.plant-pot:after {
+  content: none;
+}
+.pot-dirt {
+  display: none;
+}
+.moss-stones {
+  width: 86px;
+  height: 42px;
+  background: url("/sprites/scene-pebbles.svg") center / contain no-repeat;
+  clip-path: none;
+  box-shadow: none;
+}
+.pond-reeds {
+  width: 132px;
+  height: 92px;
+  background: url("/sprites/scene-reeds.svg") center bottom / contain no-repeat;
+  clip-path: none;
+}
+.pond-reflection {
+  width: 110px;
+  height: 45px;
+  background: url("/sprites/scene-ripples.svg") center / contain no-repeat;
+  clip-path: none;
+}
+.rpg-sky-sun {
+  background: url("/sprites/sun.png") center / contain no-repeat;
+  border: 0;
+  clip-path: none;
+}
+.rpg-cloud {
+  height: 40px;
+  background: url("/sprites/scene-cloud.svg") center / contain no-repeat;
+  clip-path: none;
+}
+.rpg-cloud-two {
+  height: 29px;
+}
+.rpg-grass {
+  background: url("/sprites/scene-grass.svg") center bottom / contain no-repeat;
+  clip-path: none;
+  width: 48px;
+  height: 28px;
+}
+.activity-3:after {
+  content: "";
+  position: absolute;
+  right: 10%;
+  bottom: 12%;
+  width: 60px;
+  height: 60px;
+  background: url("/sprites/scene-mushrooms.svg") center / contain no-repeat;
+  pointer-events: none;
+  opacity: 0.8;
+}
+.activity-5:after {
+  content: "";
+  position: absolute;
+  left: 6%;
+  bottom: 8%;
+  width: 42px;
+  height: 58px;
+  background: url("/sprites/scene-lantern.svg") center / contain no-repeat;
+  pointer-events: none;
+  opacity: 0.8;
+}
+.activity-7:after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 110px;
+  height: 66px;
+  background: url("/sprites/scene-pebbles.svg") center / contain no-repeat;
+  pointer-events: none;
+  opacity: 0.4;
+}
+/* Keep decorative props out of text and interaction areas. */
+.activity-3:after,
+.activity-5:after,
+.activity-7:after {
+  inset: auto;
+  right: 8%;
+  bottom: 8%;
+  z-index: 2;
+}
+.activity-5:after {
+  right: auto;
+  left: 6%;
+}
+.rpg-sky-sun {
+  right: 45%;
+  top: 14px;
+}
+.biome-moon {
+  background: url("/sprites/sun.png") center / contain no-repeat;
+  border-radius: 0;
+  opacity: 0.25;
+}
+.world-card-0 .biome-moon,
+.world-card-5 .biome-moon {
+  background-image: url("/sprites/moon.png");
+}
+.world-card-7 .biome-moon {
+  background-image: url("/sprites/star.png");
+}
+.world-card-8 .biome-moon {
+  background-image: url("/sprites/rpg-void-mote.svg");
+}
+@media (max-width: 650px) {
+  .shop-heading h2 {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+}

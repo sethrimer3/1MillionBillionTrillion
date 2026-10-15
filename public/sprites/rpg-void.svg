@@ -1,15 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 112" width="96" height="112">
 <defs><filter id="pencil" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".065" numOctaves="2" seed="19"/><feDisplacementMap in="SourceGraphic" scale=".65"/></filter></defs>
 <g filter="url(#pencil)" stroke="#302f41" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-<path d="m20 39 13-24 33-1 15 27-30 57Z" fill="#1b172a" stroke="#9b80b6"/>
-<path d="m20 39 20 6-7-30Zm20 6 11 53-31-59" fill="#30243f"/>
-<path d="m40 45 21-2-10 55Z" fill="#11101e"/>
-<path d="m61 43 20-2-30 57Z" fill="#352340"/>
-<path d="m33 15 7 30 21-2 5-29" fill="#4a355a"/>
-<path d="m66 14-5 29 20-2" fill="#695074"/>
-<path d="m21 39 60 2M33 15l28 28m5-29L40 45" fill="none" stroke="#795a91" stroke-width="1.4"/>
-<path d="m28 35 6-12m30 45-8 17" fill="none" stroke="#9f80b8" stroke-width="2"/>
-<path d="m44 53 1 2m10-4 1 2" stroke="#d4acd9" stroke-width="2.5"/>
-<path d="M14 68C-9 43 8 27 23 26M75 80c22-3 23-31 11-43M26 94l-5 6m61-84 4-5M9 83l-3 3" fill="none" stroke="#806393" stroke-width="1.6"/>
-<path d="m39 105 18 1" stroke="#886895" opacity=".7"/>
+<path d="m9 41 13-29 13 19L49 6l12 24L79 12l7 33-8 38-28 21-28-22Z" fill="#292038" stroke="#9b80b6"/>
+<path d="m9 41 24 8 2-18-13-19Zm24 8 17 55-28-22Z" fill="#594269"/>
+<path d="m35 31 14-25 12 24-11 17Z" fill="#745785"/>
+<path d="m61 30 18-18-6 37-23-2Z" fill="#46304f"/>
+<path d="m73 49 13-4-8 38-28 21Z" fill="#4a3159"/>
+<path d="m33 49 17-10 20 11-4 26-16 14-17-16Z" fill="#0e0c19" stroke="#b18fc8" stroke-width="1.8"/>
+<path d="m40 52 10-5 12 7m-11 28 10-10M20 33l2-10m51 42-2 12" fill="none" stroke="#9875ae" stroke-width="2"/>
+<path d="m43 61 1 3m12-4 1 3" stroke="#d4acd9" stroke-width="2.5"/>
+<path d="M17 72C-3 59 0 38 13 33m67 44c20-17 17-37 7-44M25 98l-6 7m62-95 5-5" fill="none" stroke="#806393" stroke-width="1.6"/>
 </g></svg>

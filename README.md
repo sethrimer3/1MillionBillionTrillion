@@ -1,6 +1,6 @@
 # million. billion. trillion.
 
-An installable mobile idle game built with HTML, TypeScript, CSS, and original Paint-style PNG sprites. A dark, torchlit gate connects seven rainbow worlds and two prestige crystal worlds. The interface has no tutorial screens or walkthroughs.
+An installable mobile idle game built with HTML, TypeScript, CSS, original Paint-style sprites, and Pixelify Sans throughout. A dark, torchlit gate connects seven rainbow worlds and two prestige crystal worlds. The interface has no tutorial screens or walkthroughs.
 
 ## Development
 
@@ -28,11 +28,13 @@ Browser tests use system Chromium when available. Otherwise, run `npx playwright
 - `src/rpg-view.ts`: the yellow world's battles, inventory, map, and character views.
 - `src/rpg.css`: illustrated RPG scenery and in-game panels.
 - `src/prestige.css`: permanent upgrade tree, crystal caves, and prestige UI.
+- `src/pixel.css`: pixel typography sizing, crystal badges, and illustrated scene props.
 - `src/ui-art.css`: sprite icons, hand-drawn frame borders, and settings toggles.
 - `src/art.ts`: sprite presentation and environmental artwork.
 - `src/style.css`: app layout, world scenery, and sprite animations.
 - `public/sprites/`: original hand-drawn RPG doodles and raster artwork, including three-frame flame animations.
-- `scripts/draw_ui_sprites.py`: original transparent bitmap icons, rainbow gems, frame corners, and toggles; Python 3, no packages needed.
+- `scripts/draw_scene_sprites.py`: original drawn scenery including mountains, fences, pots, reeds, and lanterns; Python 3, no packages needed.
+- `scripts/draw_ui_sprites.py`: original transparent bitmap icons, seven distinct rainbow crystal silhouettes and their unfilled sockets, frame corners, and toggles; Python 3, no packages needed.
 - `scripts/draw_sprites.py`: reproducible sprite sources; run with Python 3, no packages needed.
 - `scripts/draw_rpg_sprites.py`: reproducible RPG characters, enemies, props, and equipment; Python 3, no packages needed.
 - `scripts/draw_crystal_sprites.py`: reproducible iridescent/void crystals and prestige doodles; Python 3, no packages needed.

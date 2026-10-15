@@ -147,15 +147,35 @@ p=Drawing();p.line([(31,12),(31,28),(32,51)],INK,8);p.line([(12,31),(31,32),(51,
 p.line([(31,12),(31,28),(32,51)],SAGE,5);p.line([(12,31),(31,32),(51,31)],SAGE,5);p.save('plus')
 p=Drawing();sparkle(p,31,31);p.line([(31,19),(33,43)],GOLD,3);p.line([(21,31),(42,30)],GOLD,3);p.save('spark')
 
-# The seven socket gems: jagged mouse outlines, colored facets, uneven highlights.
-for n,col in enumerate(['#dd958a','#e3ac6e','#dbc482','#a1b58b','#8db4c9','#a6a1c7','#bb98c5']+['#514c60']):
-    p=Drawing(48,60)
-    p.poly([(23,3),(36,14),(40,29),(32,47),(23,56),(11,45),(6,28),(12,13)],col,'#34313f',3)
-    p.poly([(23,7),(21,28),(10,28),(15,15)],'#6e687a' if n==7 else '#e8d9bc',None)
-    p.poly([(21,28),(23,52),(34,43),(37,29)],'#3c394e' if n==7 else '#81758b',None)
-    p.line([(23,7),(21,28),(23,52)],'#464151' if n==7 else '#9b8c9d',1)
-    p.line([(16,17),(13,24)],'#827889' if n==7 else '#f9e6cb',2)
-    p.save('gem-off' if n==7 else f'gem-{n}')
+p=Drawing();p.line([(8,31),(15,21),(24,23),(39,41),(50,42),(57,32),(51,21),(41,23),(24,42),(14,42),(8,31)],INK,6);p.line([(8,31),(15,21),(24,23),(39,41),(50,42),(57,32),(51,21),(41,23),(24,42),(14,42),(8,31)],LILAC,3);p.save('infinity')
+
+# Every rainbow crystal has its own silhouette, even in an unfilled socket.
+crystals = [
+    # Ember fang: an asymmetric, leaning spear.
+    ([(29,3),(27,20),(40,28),(32,48),(18,57),(8,38),(13,22)], [(29,6),(19,28),(11,38),(16,22)], [(19,28),(18,54),(31,46),(37,29)]),
+    # Amber pebble: a broad, roughly octagonal nugget.
+    ([(15,12),(32,10),(43,23),(40,43),(28,51),(12,48),(4,32),(7,20)], [(15,15),(31,13),(24,28),(8,31),(10,22)], [(24,28),(28,48),(38,41),(40,24)]),
+    # Citrine sun: six long mineral points.
+    ([(23,2),(29,17),(41,10),(37,26),(46,32),(34,38),(38,53),(25,46),(16,58),(14,41),(3,39),(12,28),(7,15),(20,19)], [(23,7),(20,24),(10,19),(15,29),(24,31),(28,20)], [(24,31),(25,45),(35,49),(31,37),(42,32)]),
+    # Emerald cluster: three interlocking crystals rooted together.
+    ([(5,31),(13,20),(19,29),(20,10),(29,3),(35,21),(34,33),(41,25),(46,35),(37,53),(20,58),(10,49)], [(29,7),(25,25),(25,51),(21,47),(23,13)], [(25,27),(25,54),(34,50),(32,23)]),
+    # Sapphire drop: round at the base, one curved crystalline tip.
+    ([(30,3),(28,17),(36,25),(42,37),(39,49),(30,56),(16,55),(6,45),(6,32),(13,21),(23,14)], [(26,12),(17,26),(11,35),(12,43),(23,34)], [(23,34),(28,52),(37,46),(39,37),(32,27)]),
+    # Indigo crescent: the open edge is part of the silhouette.
+    ([(32,4),(18,9),(8,22),(5,39),(13,52),(27,56),(41,48),(31,47),(22,39),(19,26),(23,15)], [(27,9),(17,19),(12,34),(9,38),(12,23),(20,13)], [(12,34),(16,48),(27,53),(35,49),(23,43)]),
+    # Violet bow: a short cross with four large wing-shaped facets.
+    ([(5,11),(22,20),(32,8),(33,25),(46,30),(34,37),(38,53),(23,44),(10,54),(13,37),(3,30),(15,25)], [(9,16),(22,24),(23,33),(7,30),(18,28)], [(23,33),(24,42),(35,49),(31,36),(42,31)]),
+]
+for n,(outline,highlight,shadow) in enumerate(crystals):
+    for lit in [True,False]:
+        p=Drawing(48,60)
+        col=['#dd958a','#e3ac6e','#dbc482','#a1b58b','#8db4c9','#a6a1c7','#bb98c5'][n] if lit else '#514c60'
+        p.poly(outline,col,'#34313f',2)
+        p.poly(highlight,'#f0dfc3' if lit else '#797184',None)
+        p.poly(shadow,'#796b87' if lit else '#3b374b',None)
+        p.line([highlight[0],highlight[1]],'#faeacd' if lit else '#92869c',2)
+        p.line([highlight[-1],shadow[0],shadow[1]],'#9b8298' if lit else '#4b445b',1)
+        p.save(f'gem-{n}' if lit else f'gem-{n}-off')
 
 # Small source borders are sliced by CSS, preserving the drawn corners at every size.
 for name,col,shine in [('frame','#72677d','#9a8891'),('frame-gold','#a18e6e','#d2b58b'),('frame-green','#7c8c77','#aeb89c'),('frame-paper','#9e8b70','#c7b190')]:
@@ -171,4 +191,4 @@ for name,on in [('toggle-off',False),('toggle-on',True)]:
     x=37 if on else 9
     p.poly([(x,10),(x+17,9),(x+18,24),(x,25)],SAGE if on else '#9b8fa9','#4c4456',1)
     p.line([(x+3,12),(x+12,12)],'#d3d5b8' if on else '#c0afcb',1);p.save(name)
-print('Drew 35 original UI sprites.')
+print('Drew UI icons, distinct rainbow crystals, frames, and toggles.')

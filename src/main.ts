@@ -1,9 +1,7 @@
-import "@fontsource/caveat/latin-500.css";
-import "@fontsource/caveat/latin-600.css";
-import "@fontsource/dm-sans/latin-400.css";
-import "@fontsource/dm-sans/latin-500.css";
-import "@fontsource/dm-sans/latin-600.css";
 import "@fontsource/pixelify-sans/latin-400.css";
+import "@fontsource/pixelify-sans/latin-500.css";
+import "@fontsource/pixelify-sans/latin-600.css";
+import "@fontsource/pixelify-sans/latin-700.css";
 import "./style.css";
 import "./prestige.css";
 import {
@@ -41,6 +39,7 @@ import {
 import { sprite, uiIcon, gem, scenery, torch } from "./art";
 import { mountRpg, type RpgController } from "./rpg-view";
 import "./ui-art.css";
+import "./pixel.css";
 
 type View = "gate" | "worlds" | "world" | "relics" | "prestige";
 type Play = {
@@ -319,8 +318,13 @@ function gateScreen(): string {
     .map((_, i) => miniWorld(i))
     .join("")}</div></section></section>`;
 }
-function worldGem(i: number): string {
-  return i < 7 ? gem(i, true) : sprite(WORLDS[i].kind, "factor-crystal");
+function worldGem(i: number, lit = true): string {
+  return i < 7
+    ? gem(i, lit)
+    : sprite(
+        WORLDS[i].kind,
+        "factor-crystal" + (lit ? "" : " dormant-crystal"),
+      );
 }
 function factors(): string {
   return state.worlds
@@ -436,14 +440,14 @@ function worldsScreen(): string {
     (w, i) => {
       const open = available(i),
         secret = i >= 7 && !open;
-      return `<button class="world-card world-card-${i} ${open ? "available" : "locked"}" data-world="${i}" style="--world:${w.color}" aria-label="${open ? "Play " + w.name : secret ? "Undiscovered world" : w.name + " locked at " + format(w.unlock)}"><div class="world-card-top"><span class="world-number">${secret ? "??" : String(i + 1).padStart(2, "0")}</span>${open ? `<span class="world-active"><i></i>${rate(state.worlds[i], state) > 0 ? format(rate(state.worlds[i], state)) + "/s" : "AWAKE"}</span>` : uiIcon("lock")}</div><div class="card-biome"><div class="biome-moon"></div><div class="biome-ground"></div>${sprite(w.kind, "card-sprite")}${i === 0 ? '<i class="biome-spark"></i>' : ""}${i === 5 ? '<i class="biome-star star-a"></i><i class="biome-star star-b"></i>' : ""}</div><div class="world-card-info"><h2>${secret ? (i === 7 ? "An unnamed color" : "An absent color") : w.name}</h2><div class="world-card-bottom">${open ? `<span data-world-score="${i}">${format(state.worlds[i].score)} <small>${w.noun}</small></span><span class="card-enter">${uiIcon("arrow")}</span>` : `<span>${uiIcon("lock")}${secret ? (i === 7 ? "PRESTIGE I" : "PRESTIGE III") : format(w.unlock)}</span><span class="unfilled-gem">${i < 7 ? gem(i, false) : "?"}</span>`}</div></div>${open && !seen.has(i) ? '<span class="new-mark">NEW</span>' : ""}</button>`;
+      return `<button class="world-card world-card-${i} ${open ? "available" : "locked"}" data-world="${i}" style="--world:${w.color}" aria-label="${open ? "Play " + w.name : secret ? "Undiscovered world" : w.name + " locked at " + format(w.unlock)}"><div class="world-card-top"><span class="world-number">${worldGem(i, open)}${secret ? "??" : String(i + 1).padStart(2, "0")}</span>${open ? `<span class="world-active"><i></i>${rate(state.worlds[i], state) > 0 ? format(rate(state.worlds[i], state)) + "/s" : "AWAKE"}</span>` : uiIcon("lock")}</div><div class="card-biome"><div class="biome-moon"></div><div class="biome-ground"></div>${sprite(w.kind, "card-sprite")}${i === 0 ? '<i class="biome-spark"></i>' : ""}${i === 5 ? '<i class="biome-star star-a"></i><i class="biome-star star-b"></i>' : ""}</div><div class="world-card-info"><h2>${secret ? (i === 7 ? "An unnamed color" : "An absent color") : w.name}</h2><div class="world-card-bottom">${open ? `<span data-world-score="${i}">${format(state.worlds[i].score)} <small>${w.noun}</small></span><span class="card-enter">${uiIcon("arrow")}</span>` : `<span>${uiIcon("lock")}${secret ? (i === 7 ? "PRESTIGE I" : "PRESTIGE III") : format(w.unlock)}</span><span class="unfilled-gem">${i < 7 ? gem(i, false) : "?"}</span>`}</div></div>${open && !seen.has(i) ? '<span class="new-mark">NEW</span>' : ""}</button>`;
     },
   ).join("")}</div><div class="spectrum-line">${WORLDS.slice(0, 7)
     .map(
       (w, i) =>
         `<span class="${available(i) ? "active" : ""}" style="--world:${w.color}"></span>`,
     )
-    .join("")}<i>∞</i></div></section>`;
+    .join("")}<i>${uiIcon("infinity")}</i></div></section>`;
 }
 function worldScreen(): string {
   const w = WORLDS[current];
@@ -496,7 +500,7 @@ function activity(): string {
     body = `<div class="dream-orbit orbit-a"></div><div class="dream-orbit orbit-b"></div><div class="dream-stars"></div><div class="echo-crystal">${sprite("crystal")}</div><div class="dream-tiles">${["flower-red", "flower-gold", "flower-blue", "flower"].map((s, n) => `<button class="dream-tile ${phase === n ? "echoing" : ""} ${p.mistake > now ? "mistake" : ""}" data-tap="${n}" aria-label="Dream ${n + 1}" ${phase !== -1 ? "disabled" : ""}>${sprite(s)}<span>${n + 1}</span></button>`).join("")}</div>`;
   }
   if (i === 7) {
-    body = `<div class="crystal-cave"></div><div class="crystal-rays phase-${p.ripe % 3}"></div><button class="sprite-target prism-heart" data-tap="3" aria-label="Turn the crystal">${sprite("rpg-iridescent")}</button><div class="refraction-beams">${[0, 1, 2].map((n) => `<button class="refraction ${n === p.ripe % 3 ? "aligned" : ""}" data-tap="${n}" aria-label="Refract ${["rose", "gold", "blue"][n]}">${sprite("rpg-shard-" + n)}<span>${n === p.ripe % 3 ? "✦" : "·"}</span></button>`).join("")}</div><div class="crystal-chain">${p.chain ? "×" + (p.chain + 1) : "◇"}</div>`;
+    body = `<div class="crystal-cave"></div><div class="crystal-rays phase-${p.ripe % 3}"></div><button class="sprite-target prism-heart" data-tap="3" aria-label="Turn the crystal">${sprite("rpg-iridescent")}</button><div class="refraction-beams">${[0, 1, 2].map((n) => `<button class="refraction ${n === p.ripe % 3 ? "aligned" : ""}" data-tap="${n}" aria-label="Refract ${["rose", "gold", "blue"][n]}">${sprite("rpg-shard-" + n)}<span>${n === p.ripe % 3 ? uiIcon("spark") : "·"}</span></button>`).join("")}</div><div class="crystal-chain">${p.chain ? "×" + (p.chain + 1) : sprite("rpg-iridescent")}</div>`;
   }
   if (i === 8) {
     body = `<div class="void-rings"><i></i><i></i><i></i></div><div class="void-grid"></div><div class="void-orbit mass-${Math.min(p.chain, 5)}">${Array.from({ length: 5 }, (_, n) => `<i class="${n < p.chain ? "fed" : ""}" style="--orbit:${n * 72}deg">${sprite("rpg-void-mote")}</i>`).join("")}</div><button class="sprite-target void-heart ${p.chain >= 5 ? "unstable" : ""}" data-tap="0" aria-label="${p.chain >= 5 ? "Collapse the void" : "Feed the void"}">${sprite("rpg-void")}</button><button class="void-collapse" data-tap="1" ${p.chain < 5 ? "disabled" : ""}>${p.chain >= 5 ? "COLLAPSE" : p.chain + " / 5"}</button>`;
@@ -504,7 +508,7 @@ function activity(): string {
   return (
     body +
     helperSprites() +
-    `<div class="activity-vignette"></div><span class="activity-corner">${String(current + 1).padStart(2, "0")} : ∞</span>`
+    `<div class="activity-vignette"></div><span class="activity-corner">${String(current + 1).padStart(2, "0")} : ${uiIcon("infinity")}</span>`
   );
 }
 function echoPhase(p: Play): number {
