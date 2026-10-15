@@ -126,8 +126,8 @@ for side in [0,1]:
     x=29 if side==0 else 146
     for y in range(98,220,23):
         p.box(x+random.randint(-1,1),y,17,20,'#565562' if (y//23)%2 else '#444650');p.box(x+2,y+1,13,2,'#68636b');p.box(x+15,y+4,2,16,'#303540');p.box(x+4,y+14,2,2,'#3a3c47')
-for angle in range(190,351,20):
-    a=math.radians(angle);a2=math.radians(angle+17)
+for angle in range(180,360,20):
+    a=math.radians(angle);a2=math.radians(angle+18)
     pts=[(96+67*math.cos(a),94+75*math.sin(a)),(96+67*math.cos(a2),94+75*math.sin(a2)),(96+48*math.cos(a2),94+53*math.sin(a2)),(96+48*math.cos(a),94+53*math.sin(a))]
     p.poly(pts,random.choice(['#595865','#4f4e5c','#62606b']));p.line(int(pts[0][0]),int(pts[0][1]),int(pts[1][0]),int(pts[1][1]),'#77707a')
 p.poly([(51,225),(51,96),(55,76),(66,59),(83,49),(101,47),(119,55),(132,72),(141,96),(142,226)],'#383342')
@@ -144,6 +144,17 @@ p.box(56,113,82,29,'#252632');p.box(57,113,80,1,'#796c63');p.box(57,141,80,1,'#7
 p.poly([(21,222),(43,219),(46,226),(155,225),(158,219),(175,223),(179,233),(17,233)],'#5a5660');p.box(20,230,156,4,'#323441');p.box(25,222,13,2,'#77707a')
 for x,y in [(32,204),(28,189),(159,192),(164,215),(35,56),(143,39)]:
     p.box(x,y,4,3,'#485448');p.box(x+2,y+3,4,3,'#323f37')
+# Separate the wooden leaves from the masonry so the stone arch never swings.
+mask=Paint(192,240)
+mask.poly([(51,221),(51,96),(55,76),(66,59),(83,49),(101,47),(119,55),(132,72),(141,96),(142,221)],'#ffffff')
+frame=Paint(192,240);left=Paint(192,240);right=Paint(192,240)
+for yy in range(240):
+    for xx in range(192):
+        if mask.p[yy][xx][3]:
+            (left if xx<=97 else right).p[yy][xx]=p.p[yy][xx]
+        else:
+            frame.p[yy][xx]=p.p[yy][xx]
+frame.png('gate-frame');left.png('gate-left');right.png('gate-right')
 p.png('gate')
 
 # App icons use the same original door sprite.

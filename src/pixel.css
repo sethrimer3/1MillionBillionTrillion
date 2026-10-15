@@ -63,14 +63,6 @@ h1,
   font-size: 17px;
   line-height: 1.2;
 }
-.mini-world strong {
-  font-size: 16px;
-  line-height: 1.25;
-  white-space: normal;
-}
-.shelf-heading h2 {
-  font-size: 20px;
-}
 .tree-heading h2 {
   font-size: 22px;
 }
@@ -85,7 +77,6 @@ h1,
   font-size: 21px;
   line-height: 1.4;
 }
-.gate-target-name,
 .next-threshold {
   font-size: 19px;
   line-height: 1.4;
@@ -173,16 +164,6 @@ h1,
   .world-card-info h2 {
     font-size: 17px;
   }
-  .mini-world strong {
-    font-size: 13px;
-  }
-  .shelf-heading h2 {
-    font-size: 17px;
-  }
-  .shelf-heading h2 > span {
-    font-size: 10px;
-    margin-left: 6px;
-  }
   .rebirth-copy h2 {
     font-size: 17px;
   }
@@ -195,7 +176,6 @@ h1,
   .node-copy small {
     letter-spacing: 0.5px;
   }
-  .gate-target-name,
   .next-threshold {
     font-size: 16px;
   }

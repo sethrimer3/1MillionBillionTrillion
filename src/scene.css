@@ -1,0 +1,685 @@
+/* A game viewport. Navigation lives in the scene; only its contents scroll. */
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  min-width: 280px;
+}
+.app-shell {
+  position: fixed;
+  inset: 0;
+  min-height: 0;
+  padding: 0;
+  background: #11141f;
+}
+#screen {
+  position: absolute;
+  inset: 0;
+  max-width: none;
+  margin: 0;
+  padding: 82px clamp(16px, 4vw, 54px) 32px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #4c4757 transparent;
+}
+.scene-navigation {
+  position: fixed;
+  z-index: 20;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: #11152080;
+}
+.scene-navigation .nav-item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  padding: 8px;
+  gap: 0;
+  border: 0;
+  border-image: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #bdb4b7;
+}
+.scene-navigation .nav-item > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.scene-navigation .nav-item > .ui-icon {
+  width: 27px;
+  height: 27px;
+  opacity: 0.55;
+  transform: none;
+}
+.scene-navigation .nav-item:hover,
+.scene-navigation .nav-item:focus-visible {
+  background: #5b53602b;
+}
+.scene-navigation .nav-item.selected {
+  background: #bbb0a310;
+}
+.scene-navigation .nav-item.selected > .ui-icon,
+.scene-navigation .nav-item:hover > .ui-icon {
+  opacity: 1;
+}
+.scene-navigation .nav-item.selected:before {
+  content: none;
+}
+.scene-navigation .relic-dot {
+  top: 5px;
+  right: 6px;
+  width: 3px;
+  height: 3px;
+}
+.scene-navigation .nav-item.prestige-ready:after {
+  top: 5px;
+  right: 5px;
+  width: 4px;
+  height: 4px;
+}
+html[data-view="gate"] #screen {
+  padding: 0;
+  overflow: hidden;
+}
+.gate-page,
+.gate-stage {
+  width: 100%;
+  height: 100%;
+}
+.gate-stage {
+  --gate-h: min(68dvh, 128vw);
+  --torch-gap: min(calc(var(--gate-h) * 0.65), 49vw);
+  border: 0;
+  border-radius: 0;
+  box-shadow: inset 0 0 140px #080b1480;
+}
+.gate-score {
+  top: 6dvh;
+  width: min(90%, 720px);
+  max-width: none;
+}
+.gate-score .eyebrow {
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: 2px;
+}
+.gate-score .total-number {
+  font-size: clamp(36px, 7dvh, 64px);
+  margin: 12px 0 12px;
+}
+.gate-score .total-number.exact {
+  font-size: clamp(13px, 2.3vw, 30px);
+  max-height: 15dvh;
+  overflow-y: auto;
+}
+.score-factors {
+  max-width: 95%;
+  gap: 7px;
+}
+.score-factors .factor-crystal {
+  width: 13px;
+  height: 16px;
+}
+.door-container {
+  height: var(--gate-h);
+  width: calc(var(--gate-h) * 0.799);
+  bottom: 9dvh;
+}
+.door-inscription {
+  font-size: clamp(6px, 1.3dvh, 11px);
+  top: 28%;
+  height: 29%;
+  line-height: 1.05;
+  gap: 2px;
+}
+.door-aura {
+  width: calc(var(--gate-h) * 1.1);
+  height: var(--gate-h);
+  bottom: 9dvh;
+}
+.torch {
+  height: calc(var(--gate-h) * 0.3);
+  width: min(calc(var(--gate-h) * 0.18), 18vw);
+  left: calc(50% - var(--torch-gap));
+  bottom: calc(9dvh + var(--gate-h) * 0.23);
+}
+.torch-1 {
+  left: auto;
+  right: calc(50% - var(--torch-gap));
+}
+.sky-moon {
+  top: 19%;
+  left: 20%;
+}
+.hidden-sigil {
+  right: 14%;
+  bottom: 12%;
+  width: 44px;
+  height: 48px;
+}
+.threshold-label {
+  bottom: 6%;
+  max-width: 80%;
+  line-height: 1.4;
+}
+.scene-coordinate,
+.scene-ambience {
+  bottom: 20px;
+  font-size: 9px;
+}
+/* The small recesses sit directly on the arch's individual voussoir stones. */
+.gate-socket {
+  width: 8.5%;
+  height: 8.2%;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  clip-path: none;
+  overflow: visible;
+}
+.gate-socket:hover {
+  background: none;
+}
+.gate-socket:after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+.gate-socket .socket-cut {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.socket-stone-gem {
+  position: absolute;
+  left: 12.5%;
+  top: 10.5%;
+  width: 75%;
+  height: 79%;
+  pointer-events: none;
+}
+.gate-socket .gem {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(1px 2px 1px #090b13);
+}
+.gate-socket:hover .gem {
+  filter: drop-shadow(0 0 3px #f2d9a06b);
+}
+.gate-socket:focus-visible {
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.gate-stage[data-fires="0"] .socket-cut {
+  filter: brightness(0.7);
+}
+/* Secondary screens share one quiet hierarchy, without repeated dashboard chrome. */
+.worlds-page,
+.world-page,
+.relic-page,
+.prestige-page {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.screen-heading {
+  margin-bottom: 24px;
+  gap: 18px;
+  align-items: center;
+}
+.screen-heading .eyebrow,
+.screen-heading .chapter-mark > span {
+  display: none;
+}
+.screen-heading h1 {
+  margin: 0;
+  font-size: 26px;
+}
+.screen-heading .chapter-mark {
+  margin: 0;
+}
+.screen-heading .chapter-mark strong {
+  font-size: 19px;
+}
+.screen-heading .chapter-mark small {
+  font-size: 12px;
+}
+.world-heading h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  font-size: 24px;
+}
+.world-heading .chapter-mark > span {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0;
+}
+.world-heading .chapter-mark strong {
+  color: var(--world);
+  font-size: 28px;
+}
+.world-heading .world-title-gem {
+  display: flex;
+}
+.world-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.world-card {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: center;
+  min-height: 110px;
+  height: auto;
+  padding: 10px;
+  border: 1px solid #343440;
+  border-image: none;
+  border-radius: 3px;
+  background: #1a1c27;
+  overflow: hidden;
+}
+.world-card:hover {
+  border-color: #7a7066;
+}
+.world-card-top,
+.spectrum-line,
+.card-biome .biome-moon,
+.card-biome .biome-ground,
+.card-biome i {
+  display: none;
+}
+.card-biome {
+  height: 84px;
+  width: 78px;
+  margin: 0;
+  overflow: visible;
+  background: none !important;
+}
+.card-sprite {
+  width: 58px;
+  height: 62px;
+  left: 50%;
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+}
+.world-card-info {
+  padding: 0 0 0 8px;
+}
+.world-card-info h2 {
+  min-height: 0;
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.world-card-bottom {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  gap: 6px;
+}
+.world-card-bottom small {
+  display: none;
+}
+.world-card-bottom > span:first-child {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.card-enter {
+  width: 22px;
+  height: 22px;
+  background: none;
+  border: 0;
+}
+.unfilled-gem {
+  display: none;
+}
+.new-mark {
+  right: 9px;
+  top: 5px;
+  left: auto;
+  font-size: 8px;
+}
+.world-detail-grid,
+.rpg-layout {
+  gap: 24px;
+}
+.world-shop .pocket-bar {
+  margin-bottom: 18px;
+  border-image: none;
+  border: 0;
+  border-bottom: 1px solid #343340;
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 0 16px;
+}
+.shop-heading h2 {
+  font-size: 17px;
+}
+.shop-row {
+  border-image: none;
+  border: 1px solid #3b3544;
+  border-radius: 3px;
+  background: #211f2b;
+  padding: 14px 12px;
+}
+.shop-row:hover:not(:disabled) {
+  border-image: none;
+  border-color: #8c7a66;
+}
+.upgrade-name strong {
+  font-size: 15px;
+}
+.activity-stage {
+  border-radius: 3px;
+}
+.relic-cabinet {
+  border-image: none;
+  border: 0;
+  background: transparent;
+}
+.cabinet-top {
+  display: none;
+}
+.relic-grid {
+  padding: 0;
+}
+.relic-card {
+  border: 1px solid #302f3b;
+  border-radius: 3px;
+  background: #1b1c26;
+}
+.tree-heading {
+  margin-top: 24px;
+}
+.tree-node,
+.tree-node.owned,
+.tree-node.purchasable,
+.rebirth-panel {
+  border-image: none;
+  border-radius: 3px;
+}
+.next-threshold {
+  padding-bottom: 10px;
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  max-width: calc(100vw - 32px);
+}
+@media (max-width: 900px) {
+  .world-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  #screen {
+    padding: 76px 16px 24px;
+  }
+  .scene-navigation {
+    top: max(8px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+  }
+  .scene-navigation .nav-item {
+    width: 42px;
+    height: 42px;
+  }
+  .gate-score {
+    top: max(82px, 9dvh);
+  }
+  .gate-score .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1.2px;
+  }
+  .gate-score .total-number {
+    font-size: 45px;
+  }
+  .score-factors {
+    gap: 4px;
+  }
+  .score-factors button {
+    font-size: 10px;
+  }
+  .score-factors svg.gem {
+    width: 7px;
+    height: 11px;
+  }
+  .scene-coordinate {
+    left: 16px;
+  }
+  .scene-ambience {
+    right: 16px;
+    font-size: 8px;
+  }
+  .threshold-label {
+    font-size: 7px;
+  }
+  .hidden-sigil {
+    right: 8%;
+  }
+  .world-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+  .world-card {
+    min-height: 86px;
+    grid-template-columns: 60px minmax(0, 1fr);
+    padding: 8px 12px;
+  }
+  .card-biome {
+    height: 66px;
+    width: 60px;
+  }
+  .card-sprite {
+    width: 48px;
+    height: 52px;
+  }
+  .world-card-info h2 {
+    font-size: 16px;
+    margin-bottom: 7px;
+  }
+  .world-card-bottom small {
+    display: inline;
+    font-size: 10px;
+  }
+  .new-mark {
+    top: 4px;
+  }
+  .world-heading h1 {
+    font-size: 19px;
+    max-width: 240px;
+  }
+  .world-heading .chapter-mark strong {
+    font-size: 22px;
+  }
+  .world-detail-grid {
+    gap: 20px;
+  }
+  .world-shop {
+    display: block;
+  }
+  .shop-heading {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .shop-heading h2 {
+    font-size: 16px;
+  }
+  .shop-row {
+    padding: 13px 12px;
+  }
+  .relic-card h2 {
+    font-size: 15px;
+  }
+}
+@media (max-height: 500px) and (min-aspect-ratio: 1/1) {
+  .gate-stage {
+    --gate-h: 65dvh;
+  }
+  .gate-score {
+    top: 15px;
+  }
+  .gate-score .eyebrow {
+    font-size: 7px;
+  }
+  .gate-score .total-number {
+    font-size: 32px;
+    margin: 5px 0;
+  }
+  .score-factors {
+    min-height: 18px;
+  }
+  .score-factors button {
+    font-size: 9px;
+  }
+  .scene-coordinate,
+  .scene-ambience {
+    bottom: 12px;
+  }
+  .threshold-label {
+    bottom: 3%;
+  }
+}
+
+/* Socket centers follow the actual arch-stone polygons in draw_sprites.py. */
+.socket-0 {
+  left: 24.13%;
+  top: 26.4%;
+}
+.socket-1 {
+  left: 30.59%;
+  top: 19.29%;
+}
+.socket-2 {
+  left: 39.4%;
+  top: 14.58%;
+}
+.socket-3 {
+  left: 49.48%;
+  top: 12.83%;
+}
+.socket-4 {
+  left: 59.63%;
+  top: 14.26%;
+}
+.socket-5 {
+  left: 68.61%;
+  top: 18.7%;
+}
+.socket-6 {
+  left: 75.35%;
+  top: 25.6%;
+}
+
+.world-card {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #32333e;
+  border-radius: 0;
+}
+.world-card.available:hover {
+  background: #25253055;
+}
+.card-biome:before,
+.card-biome:after {
+  content: none;
+}
+.view-count {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #898294;
+}
+.gate-socket:after {
+  inset: -8px;
+}
+/* Only the wooden leaves move; the carved arch and its crystal recesses stay put. */
+.door-button {
+  perspective: 700px;
+}
+.is-open .door-button {
+  transform: none;
+  opacity: 1;
+}
+.door-button .gate-sprite {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.door-leaf {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: 2;
+  pointer-events: none;
+  transition: transform 1.5s ease-in-out;
+}
+.leaf-left {
+  transform-origin: 26.6% 65%;
+}
+.leaf-right {
+  transform-origin: 74% 65%;
+}
+.is-open .leaf-left {
+  transform: rotateY(-76deg);
+}
+.is-open .leaf-right {
+  transform: rotateY(76deg);
+}
+.door-portal {
+  position: absolute;
+  left: 26.6%;
+  right: 26%;
+  top: 19.5%;
+  bottom: 8%;
+  border-radius: 50% 50% 0 0 / 27% 27% 0 0;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    #e9d9ae,
+    #b9a49a 40%,
+    #6b6681 80%
+  );
+  opacity: 0;
+  z-index: 1;
+  transition: opacity 1.5s;
+}
+.is-open .door-portal {
+  opacity: 0.85;
+}
+.door-inscription,
+.door-seam {
+  z-index: 4;
+  pointer-events: none;
+}
+.gate-sockets {
+  z-index: 5;
+}

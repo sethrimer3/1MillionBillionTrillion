@@ -176,6 +176,19 @@ for n,(outline,highlight,shadow) in enumerate(crystals):
         p.line([highlight[0],highlight[1]],'#faeacd' if lit else '#92869c',2)
         p.line([highlight[-1],shadow[0],shadow[1]],'#9b8298' if lit else '#4b445b',1)
         p.save(f'gem-{n}' if lit else f'gem-{n}-off')
+    # A chiseled negative of the exact crystal, not a separate badge or mount.
+    p=Drawing(64,76)
+    rim=[(round((x-24)*1.18+32),round((y-30)*1.18+38)) for x,y in outline]
+    cut=[(x+8,y+8) for x,y in outline]
+    p.poly(rim,'#494553','#343442',2)
+    p.poly(cut,'#171925','#252634',3)
+    for a,b in zip(rim,rim[1:]+rim[:1]):
+        if (a[1]+b[1])/2>39:
+            p.line([a,b],'#827887',1)
+    p.line([(rim[0][0]-2,rim[0][1]-2),(rim[0][0]-4,rim[0][1]-4)],'#6b6271',1)
+    p.line([(rim[-1][0]-2,rim[-1][1]+1),(rim[-1][0]-4,rim[-1][1]+3)],'#383846',1)
+    p.save(f'socket-{n}')
+
 
 # Small source borders are sliced by CSS, preserving the drawn corners at every size.
 for name,col,shine in [('frame','#72677d','#9a8891'),('frame-gold','#a18e6e','#d2b58b'),('frame-green','#7c8c77','#aeb89c'),('frame-paper','#9e8b70','#c7b190')]:

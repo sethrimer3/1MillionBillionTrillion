@@ -59,7 +59,6 @@
   transform: none;
 }
 .world-card,
-.mini-world,
 .shop-row,
 .pocket-bar,
 .relic-cabinet,
@@ -102,17 +101,6 @@ dialog,
   content: none;
 }
 @media (max-width: 650px) {
-  .bottom-dock .nav-item > .ui-icon {
-    width: 29px;
-    height: 29px;
-  }
-  .bottom-dock .nav-item {
-    gap: 2px;
-  }
-  .header-actions .ui-icon {
-    width: 24px;
-    height: 24px;
-  }
   .text-action > .ui-icon {
     width: 18px;
     height: 18px;

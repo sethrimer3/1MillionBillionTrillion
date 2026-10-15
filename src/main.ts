@@ -7,7 +7,6 @@ import "./prestige.css";
 import {
   gateGoal,
   gateWords,
-  log10,
   worldAvailable,
   PRESTIGE_UPGRADES,
   hasUpgrade,
@@ -36,10 +35,11 @@ import {
   discoveries,
   type Upgrade,
 } from "./game";
-import { sprite, uiIcon, gem, scenery, torch } from "./art";
+import { sprite, uiIcon, gem, stoneSlot, scenery, torch } from "./art";
 import { mountRpg, type RpgController } from "./rpg-view";
 import "./ui-art.css";
 import "./pixel.css";
+import "./scene.css";
 
 type View = "gate" | "worlds" | "world" | "relics" | "prestige";
 type Play = {
@@ -76,7 +76,6 @@ let lastTick = Date.now();
 let toastTimer = 0;
 let audio: AudioContext | undefined;
 let deferredInstall: (Event & { prompt: () => Promise<void> }) | null = null;
-const seen = new Set([0]);
 const plays: (Play | undefined)[] = [];
 const helpers = [
   "gnome",
@@ -181,16 +180,10 @@ function checkDiscoveries(): void {
   }
 }
 function shell(): void {
-  app.innerHTML = `<div class="app-shell"><header class="app-header"><a class="brand" href="#gate" aria-label="Million Billion Trillion">${sprite("gate", "brand-sprite")}<span class="brand-title">million<span>.</span> billion<span>.</span> trillion<span>.</span></span></a><div class="header-location" id="header-location"></div><div class="header-actions"><span class="save-light" id="save-state" title="Saved on this device" aria-label="Autosave active"></span><button class="icon-button" id="sound" aria-label="Toggle sound" aria-pressed="${state.sound}">${uiIcon(state.sound ? "sound" : "muted")}</button><button class="icon-button" id="settings" aria-label="Settings">${uiIcon("settings")}</button></div></header><aside class="side-rail" aria-label="Main navigation">${navItems("rail")}<div class="rail-bottom"><span class="rail-mark">MBT</span><span class="version">02</span></div></aside><main id="screen" tabindex="-1"></main><nav class="bottom-dock" aria-label="Main navigation">${navItems("dock")}</nav></div><div class="toast" id="toast" role="status" aria-live="polite"></div><dialog id="modal" aria-labelledby="modal-title"></dialog><div class="particles" id="particles" aria-hidden="true"></div>`;
+  app.innerHTML = `<div class="app-shell"><nav class="scene-navigation" aria-label="Main navigation">${navItems("scene")}<button class="nav-item" id="settings" aria-label="Settings" title="Settings">${uiIcon("settings")}</button></nav><main id="screen" tabindex="-1"></main></div><div class="toast" id="toast" role="status" aria-live="polite"></div><dialog id="modal" aria-labelledby="modal-title"></dialog><div class="particles" id="particles" aria-hidden="true"></div>`;
   document
     .querySelectorAll<HTMLElement>("[data-nav]")
     .forEach((b) => (b.onclick = () => navigate(b.dataset.nav!)));
-  document.querySelector<HTMLButtonElement>("#sound")!.onclick = () => {
-    state.sound = !state.sound;
-    syncPreferences();
-    save();
-    chime(2);
-  };
   document.querySelector<HTMLButtonElement>("#settings")!.onclick =
     showSettings;
   document
@@ -221,21 +214,12 @@ function navItems(prefix: string): string {
   )
     .map(
       ([name, label]) =>
-        `<button class="nav-item" data-nav="${name}" id="${prefix}-${name}">${uiIcon(name)}<span>${label}</span>${name === "relics" ? '<i class="relic-dot" hidden></i>' : ""}</button>`,
+        `<button class="nav-item" aria-label="${label}" title="${label}" data-nav="${name}" id="${prefix}-${name}">${uiIcon(name)}<span>${label}</span>${name === "relics" ? '<i class="relic-dot" hidden></i>' : ""}</button>`,
     )
     .join("");
 }
 function syncPreferences(): void {
   document.documentElement.dataset.motion = state.motion ? "on" : "off";
-  const button = document.querySelector<HTMLButtonElement>("#sound");
-  if (button) {
-    button.innerHTML = uiIcon(state.sound ? "sound" : "muted");
-    button.setAttribute("aria-pressed", String(state.sound));
-    button.setAttribute(
-      "aria-label",
-      state.sound ? "Mute sound" : "Enable sound",
-    );
-  }
 }
 function navigate(route: string): void {
   if (location.hash === "#" + route) renderView();
@@ -250,7 +234,6 @@ function readRoute(): void {
   ) {
     current = Number(route[1]);
     view = "world";
-    seen.add(current);
     play();
   } else
     view =
@@ -272,17 +255,6 @@ function renderView(): void {
     if (selected) b.setAttribute("aria-current", "page");
     else b.removeAttribute("aria-current");
   });
-  const name =
-    view === "world"
-      ? WORLDS[current].name
-      : view === "gate"
-        ? "The threshold"
-        : view === "worlds"
-          ? "Little worlds"
-          : view === "prestige"
-            ? "Beyond the threshold"
-            : "The collection";
-  document.querySelector("#header-location")!.innerHTML = `<i></i>${name}`;
   rpgController = undefined;
   const screen = document.querySelector<HTMLElement>("#screen")!;
   screen.innerHTML =
@@ -298,25 +270,20 @@ function renderView(): void {
   sceneKey = "";
   bindView();
   update();
-  window.scrollTo({ top: 0, behavior: "instant" });
+  screen.scrollTop = 0;
 }
 function gateScreen(): string {
-  return `<section class="gate-page"><div class="screen-heading"><div><div class="eyebrow"><span class="tiny-diamond"></span> THE THRESHOLD</div><h1>The other side.</h1></div><div class="chapter-mark"><span>SEALS</span><strong>${String(state.unlocked).padStart(2, "0")}<small> / 07</small></strong></div></div><div class="gate-stage ${state.won ? "is-open" : ""}" id="gate-stage"><div class="sky-grain"></div><div class="sky-moon"></div><div class="starfield">${Array.from({ length: 24 }, (_, i) => `<i style="--x:${(i * 37 + 9) % 98}%;--y:${(i * 13 + 3) % 55}%;--delay:${i * 0.23}s"></i>`).join("")}</div>${scenery()}<div class="gate-score"><span class="eyebrow">${state.won ? "THE IMPOSSIBLE, MADE POSSIBLE" : "EVERYTHING, MULTIPLIED"}</span><button class="total-number" id="total-score" aria-label="Show exact total score">${showExact ? total(state).toLocaleString("en-US") : format(total(state))}</button><div class="score-factors" id="score-factors">${factors()}</div></div><div class="door-aura"></div>${torch(0, lit[0])}${torch(1, lit[1])}<div class="door-container" id="gate-image"><div class="door-light"></div><button class="door-button ${total(state) >= gateGoal(state) ? "ready" : ""}" id="open-gate" aria-label="${total(state) >= gateGoal(state) ? "Open the gate" : "The sealed gate"}">${sprite("gate", "gate-sprite")}<span class="door-inscription">${doorInscription()}</span><span class="door-seam"></span></button><div class="gate-sockets">${WORLDS.slice(
+  return `<section class="gate-page"><div class="gate-stage ${state.won ? "is-open" : ""}" id="gate-stage"><div class="sky-grain"></div><div class="sky-moon"></div><div class="starfield">${Array.from({ length: 24 }, (_, i) => `<i style="--x:${(i * 37 + 9) % 98}%;--y:${(i * 13 + 3) % 55}%;--delay:${i * 0.23}s"></i>`).join("")}</div>${scenery()}<div class="gate-score"><span class="eyebrow">${state.won ? "THE IMPOSSIBLE, MADE POSSIBLE" : "EVERYTHING, MULTIPLIED"}</span><button class="total-number" id="total-score" aria-label="Show exact total score">${showExact ? total(state).toLocaleString("en-US") : format(total(state))}</button><div class="score-factors" id="score-factors">${factors()}</div></div><div class="door-aura"></div>${torch(0, lit[0])}${torch(1, lit[1])}<div class="door-container" id="gate-image"><div class="door-light"></div><button class="door-button ${total(state) >= gateGoal(state) ? "ready" : ""}" id="open-gate" title="${gateWords(state).join(" ")}" aria-label="${total(state) >= gateGoal(state) ? "Open the gate" : "The sealed gate"}"><span class="door-portal"></span>${sprite("gate-left", "door-leaf leaf-left")}${sprite("gate-right", "door-leaf leaf-right")}${sprite("gate-frame", "gate-sprite")}<span class="door-inscription">${doorInscription()}</span><span class="door-seam"></span></button><div class="gate-sockets">${WORLDS.slice(
     0,
     7,
   )
     .map(
       (w, i) =>
-        `<button class="gate-socket socket-${i}" data-world="${i}" aria-label="${available(i) ? w.name : "Unfilled " + w.name + " gem"}">${gem(i, available(i))}</button>`,
+        `<button class="gate-socket socket-${i}" data-world="${i}" aria-label="${available(i) ? w.name : "Unfilled " + w.name + " gem"}">${stoneSlot(i, available(i))}</button>`,
     )
     .join(
       "",
-    )}</div></div><button class="hidden-sigil ${!lit[0] && !lit[1] ? "revealed" : ""} ${state.secret ? "found" : ""}" id="secret-sigil" aria-label="Strange marking">${sprite(available(8) ? "rpg-void" : state.secret ? "rpg-iridescent" : "rune")}</button><div class="gate-fog fog-one"></div><div class="gate-fog fog-two"></div><div class="threshold-label">${state.won ? "THE WAY IS OPEN" : total(state) >= gateGoal(state) ? "THE SEAL IS BROKEN" : gateWords(state).join(" · ")}</div><div class="stage-corners"><i></i><i></i><i></i><i></i></div><span class="scene-coordinate">I · XXVII</span><span class="scene-ambience"><i></i> ${lit.some(Boolean) ? "THE FIRE STILL BURNS" : "ONLY THE DARK REMAINS"}</span></div><div class="gate-status"><span class="gate-status-label">${state.won ? "OPEN" : "SEALED"}</span><div class="seal-progress"><i style="width:${progress()}%" id="gate-progress"></i></div><span id="gate-progress-text">${progress().toFixed(1)}<small> / 100</small></span></div>${gatePrestigeBar()}<section class="world-shelf"><div class="shelf-heading"><h2>Little worlds <span>${String(count()).padStart(2, "0")} / 09</span></h2><button class="text-action" data-route="worlds">All worlds ${uiIcon("arrow")}</button></div><div class="shelf-grid">${WORLDS.slice(
-    0,
-    4,
-  )
-    .map((_, i) => miniWorld(i))
-    .join("")}</div></section></section>`;
+    )}</div></div><button class="hidden-sigil ${!lit[0] && !lit[1] ? "revealed" : ""} ${state.secret ? "found" : ""}" id="secret-sigil" aria-label="Strange marking">${sprite(available(8) ? "rpg-void" : state.secret ? "rpg-iridescent" : "rune")}</button><div class="gate-fog fog-one"></div><div class="gate-fog fog-two"></div><div class="threshold-label">${state.won ? "THE WAY IS OPEN" : total(state) >= gateGoal(state) ? "THE SEAL IS BROKEN" : gateWords(state).join(" · ")}</div><div class="stage-corners"><i></i><i></i><i></i><i></i></div><span class="scene-coordinate">I · XXVII</span><span class="scene-ambience"><i></i> ${lit.some(Boolean) ? "THE FIRE STILL BURNS" : "ONLY THE DARK REMAINS"}</span></div></section>`;
 }
 function worldGem(i: number, lit = true): string {
   return i < 7
@@ -335,12 +302,6 @@ function factors(): string {
     )
     .filter(Boolean)
     .join("<b>×</b>");
-}
-function progress(): number {
-  return Math.min(
-    100,
-    Math.max(0, (log10(total(state)) / log10(gateGoal(state))) * 100),
-  );
 }
 function doorInscription(): string {
   const n = state.prestige.count;
@@ -361,9 +322,6 @@ function doorInscription(): string {
     ...(n > 5 ? [`× 1e${(n - 5) * 3}`] : []),
   ];
   return lines.map((w) => `<span>${w}</span>`).join("");
-}
-function gatePrestigeBar(): string {
-  return `<div class="gate-target-name">${gateWords(state).join(" ")}</div><div class="gate-prestige-bar"><span>RUN ${String(state.prestige.count + 1).padStart(2, "0")}<small>TARGET ${format(gateGoal(state))}</small></span><button class="text-action" data-route="prestige" id="gate-prestige">${canPrestige(state) ? "Prestige · +" + prestigeReward(state) + " shards" : state.prestige.count ? "The tree · " + state.prestige.shards + " shards" : "Beyond the gate"} ${uiIcon("prestige")}</button></div>`;
 }
 function prestigeScreen(): string {
   const p = state.prestige;
@@ -387,7 +345,7 @@ function prestigeScreen(): string {
           : `${n.cost} SHARDS`;
     return `<button class="tree-node ${owned ? "owned" : ready ? "purchasable" : "dormant"} ${n.cost === 0 ? "awakening" : ""}" data-prestige-buy="${n.id}" ${ready ? "" : "disabled"} aria-label="${n.name}: ${n.effect}. ${status}"><span class="node-art">${sprite(n.sprite)}</span><span class="node-copy"><small>${status}</small><strong>${n.name}</strong><span>${n.effect}</span>${parent ? `<em>From ${parent.name}</em>` : ""}</span><span class="node-price">${owned ? uiIcon("check") : n.cost ? n.cost + uiIcon("star") : uiIcon("lock")}</span></button>`;
   };
-  return `<section class="prestige-page"><div class="screen-heading"><div><div class="eyebrow"><span class="tiny-diamond"></span> BEYOND THE THRESHOLD</div><h1>What remains.</h1></div><div class="chapter-mark"><span>PRESTIGE</span><strong>${String(p.count).padStart(2, "0")}</strong></div></div><div class="rebirth-panel">${sprite("rpg-rebirth", "rebirth-art")}<div class="rebirth-copy"><span class="eyebrow">RUN ${String(p.count + 1).padStart(2, "0")}</span><h2>${gateWords(state).join(" ")}</h2><div class="rebirth-stats"><span>${uiIcon("bolt")} ×${format(productionBoost(state, 0))} rainbow</span><span>${uiIcon("clock")} ×${format(idleBoost(state))} idle</span></div></div><button class="primary-button" id="prestige-now" ${canPrestige(state) ? "" : "disabled"}>Prestige</button></div><div class="tree-heading"><h2>The things you carry.</h2><span class="shard-balance">${sprite("rpg-shard-1")}<b id="prestige-shards">${p.shards}</b> shards</span></div><div class="tree-root">${node(PRESTIGE_UPGRADES[0])}</div><div class="prestige-tree">${(
+  return `<section class="prestige-page"><div class="screen-heading"><h1>Prestige</h1><span class="view-count">${p.count}</span></div><div class="rebirth-panel">${sprite("rpg-rebirth", "rebirth-art")}<div class="rebirth-copy"><span class="eyebrow">RUN ${String(p.count + 1).padStart(2, "0")}</span><h2>${gateWords(state).join(" ")}</h2><div class="rebirth-stats"><span>${uiIcon("bolt")} ×${format(productionBoost(state, 0))} rainbow</span><span>${uiIcon("clock")} ×${format(idleBoost(state))} idle</span></div></div><button class="primary-button" id="prestige-now" ${canPrestige(state) ? "" : "disabled"}>Prestige</button></div><div class="tree-heading"><h2>Upgrades</h2><span class="shard-balance">${sprite("rpg-shard-1")}<b id="prestige-shards">${p.shards}</b> shards</span></div><div class="tree-root">${node(PRESTIGE_UPGRADES[0])}</div><div class="prestige-tree">${(
     [
       ["spark", "THE SPARK"],
       ["time", "THE MOMENT"],
@@ -415,8 +373,6 @@ function confirmPrestige(): void {
   d.querySelector<HTMLButtonElement>("#confirm-prestige")!.onclick = () => {
     if (!prestige(state)) return;
     plays.fill(undefined);
-    seen.clear();
-    seen.add(0);
     lit = [true, true];
     save();
     d.close();
@@ -430,39 +386,29 @@ function confirmPrestige(): void {
     );
   };
 }
-function miniWorld(i: number): string {
-  const w = WORLDS[i],
-    open = available(i);
-  return `<button class="mini-world ${open ? "" : "locked"}" data-world="${i}" style="--world:${w.color}">${sprite(w.kind)}<span><strong>${w.name}</strong><small data-mini="${i}">${open ? format(state.worlds[i].score) : format(w.unlock)}</small></span>${open ? uiIcon("arrow") : uiIcon("lock")}</button>`;
-}
 function worldsScreen(): string {
-  return `<section class="worlds-page"><div class="screen-heading"><div><div class="eyebrow"><span class="tiny-diamond"></span> THE SPECTRUM</div><h1>Little worlds.</h1></div><div class="chapter-mark"><span>DISCOVERED</span><strong>${String(count()).padStart(2, "0")}<small> / 09</small></strong></div></div><div class="world-grid">${WORLDS.map(
+  return `<section class="worlds-page"><div class="screen-heading"><h1>Worlds</h1><span class="view-count">${count()} / ${WORLDS.length}</span></div><div class="world-grid">${WORLDS.map(
     (w, i) => {
       const open = available(i),
         secret = i >= 7 && !open;
-      return `<button class="world-card world-card-${i} ${open ? "available" : "locked"}" data-world="${i}" style="--world:${w.color}" aria-label="${open ? "Play " + w.name : secret ? "Undiscovered world" : w.name + " locked at " + format(w.unlock)}"><div class="world-card-top"><span class="world-number">${worldGem(i, open)}${secret ? "??" : String(i + 1).padStart(2, "0")}</span>${open ? `<span class="world-active"><i></i>${rate(state.worlds[i], state) > 0 ? format(rate(state.worlds[i], state)) + "/s" : "AWAKE"}</span>` : uiIcon("lock")}</div><div class="card-biome"><div class="biome-moon"></div><div class="biome-ground"></div>${sprite(w.kind, "card-sprite")}${i === 0 ? '<i class="biome-spark"></i>' : ""}${i === 5 ? '<i class="biome-star star-a"></i><i class="biome-star star-b"></i>' : ""}</div><div class="world-card-info"><h2>${secret ? (i === 7 ? "An unnamed color" : "An absent color") : w.name}</h2><div class="world-card-bottom">${open ? `<span data-world-score="${i}">${format(state.worlds[i].score)} <small>${w.noun}</small></span><span class="card-enter">${uiIcon("arrow")}</span>` : `<span>${uiIcon("lock")}${secret ? (i === 7 ? "PRESTIGE I" : "PRESTIGE III") : format(w.unlock)}</span><span class="unfilled-gem">${i < 7 ? gem(i, false) : "?"}</span>`}</div></div>${open && !seen.has(i) ? '<span class="new-mark">NEW</span>' : ""}</button>`;
+      return `<button class="world-card world-card-${i} ${open ? "available" : "locked"}" data-world="${i}" style="--world:${w.color}" aria-label="${open ? "Play " + w.name : secret ? "Undiscovered world" : w.name + " locked at " + format(w.unlock)}"><div class="card-biome">${sprite(w.kind, "card-sprite")}</div><div class="world-card-info"><h2>${secret ? "???" : w.name}</h2><div class="world-card-bottom">${open ? `<span data-world-score="${i}">${format(state.worlds[i].score)} <small>${w.noun}</small></span><span class="card-enter">${uiIcon("arrow")}</span>` : `<span>${uiIcon("lock")}${secret ? (i === 7 ? "PRESTIGE I" : "PRESTIGE III") : format(w.unlock)}</span>`}</div></div></button>`;
     },
-  ).join("")}</div><div class="spectrum-line">${WORLDS.slice(0, 7)
-    .map(
-      (w, i) =>
-        `<span class="${available(i) ? "active" : ""}" style="--world:${w.color}"></span>`,
-    )
-    .join("")}<i>${uiIcon("infinity")}</i></div></section>`;
+  ).join("")}</div></section>`;
 }
 function worldScreen(): string {
   const w = WORLDS[current];
-  const header = `<section class="world-page" style="--world:${w.color}" data-world-page="${current}"><div class="world-nav"><button class="text-action" data-route="worlds">${uiIcon("back")} Worlds</button><div class="world-tabs" aria-label="World shortcuts">${WORLDS.map((x, i) => `<button class="${i === current ? "active" : ""} ${available(i) ? "" : "locked"}" data-world="${i}" aria-label="${available(i) ? x.name : "Locked world"}" ${i === current ? 'aria-current="page"' : ""}>${sprite(!available(i) ? "lock" : x.kind)}</button>`).join("")}</div><span class="world-index">${String(current + 1).padStart(2, "0")} / 09</span></div><div class="screen-heading world-heading"><div><div class="eyebrow"><span class="tiny-diamond"></span> ${current >= 7 ? (current === 7 ? "IRIDESCENT" : "VOID") : ["VERMILION", "AMBER", "GOLD", "FERN", "SKY", "INDIGO", "VIOLET"][current]}</div><h1>${w.name}<span class="world-title-gem">${worldGem(current)}</span></h1></div><div class="chapter-mark"><span>${w.noun.toUpperCase()}</span><strong id="world-score">${format(state.worlds[current].score)}</strong></div></div>`;
+  const header = `<section class="world-page" style="--world:${w.color}" data-world-page="${current}"><div class="screen-heading world-heading"><h1><span class="world-title-gem">${worldGem(current)}</span>${w.name}</h1><div class="chapter-mark"><span>${w.noun}</span><strong id="world-score">${format(state.worlds[current].score)}</strong></div></div>`;
   return (
     header +
     (current === 2
       ? `<div class="rpg-layout"><div id="rpg-host"></div>${worldShop()}</div>`
-      : `<div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${format(multiplier(state.worlds[current]) * productionBoost(state, current))}</span></div><div class="world-milestones">${[100, 1000, 10000].map((n) => `<div class="milestone ${state.worlds[current].score >= n ? "achieved" : ""}" data-milestone="${n}">${sprite(state.worlds[current].score >= n ? "coin" : "lock")}<span>${format(n)}</span></div>`).join("")}</div></div>${worldShop()}</div>`) +
+      : `<div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${format(multiplier(state.worlds[current]) * productionBoost(state, current))}</span></div></div>${worldShop()}</div>`) +
     "</section>"
   );
 }
 function worldShop(): string {
   const w = WORLDS[current];
-  return `<aside class="world-shop"><div class="pocket-bar">${uiIcon("bag")}<span>Pocket</span><strong id="world-bank">${format(state.worlds[current].bank)}</strong></div><div class="shop-heading"><h2>A little more.</h2><span id="world-rate">${format(rate(state.worlds[current], state))}/s</span></div>${shopRow("helper", w.auto, helpers[current])}${shopRow("power", upgradeNames[current], "glove")}${shopRow("resonance", "Resonance", "rune")}<div class="world-total"><span>THE WHOLE OF IT</span><strong id="world-total">${format(total(state))}</strong><div id="world-equation">${factors()}</div></div></aside>`;
+  return `<aside class="world-shop"><div class="pocket-bar">${uiIcon("bag")}<span>Pocket</span><strong id="world-bank">${format(state.worlds[current].bank)}</strong></div><div class="shop-heading"><h2>Upgrades</h2><span id="world-rate">${format(rate(state.worlds[current], state))}/s</span></div>${shopRow("helper", w.auto, helpers[current])}${shopRow("power", upgradeNames[current], "glove")}${shopRow("resonance", "Resonance", "rune")}</aside>`;
 }
 function shopRow(kind: Upgrade, label: string, image: string): string {
   const w = state.worlds[current],
@@ -765,7 +711,7 @@ function bump(event: MouseEvent): void {
   chime(0, true);
 }
 function relicScreen(): string {
-  return `<section class="relic-page"><div class="screen-heading"><div><div class="eyebrow"><span class="tiny-diamond"></span> FOUND ALONG THE WAY</div><h1>Odd little things.</h1></div><div class="chapter-mark"><span>RELICS</span><strong>${String(state.relics.length).padStart(2, "0")}<small> / ${RELICS.length}</small></strong></div></div><div class="relic-cabinet"><div class="cabinet-top"><span>THE COLLECTION</span><i></i><span>PRIVATE · ${new Date().getFullYear()}</span></div><div class="relic-grid">${RELICS.map(
+  return `<section class="relic-page"><div class="screen-heading"><h1>Relics</h1><span class="view-count">${state.relics.length} / ${RELICS.length}</span></div><div class="relic-cabinet"><div class="relic-grid">${RELICS.map(
     (r, i) => {
       const owned = state.relics.includes(r.id);
       return `<button class="relic-card ${owned ? "owned" : "unknown"}" data-relic="${r.id}" aria-label="${owned ? r.name : "Undiscovered relic " + (i + 1)}"><span class="relic-number">${String(i + 1).padStart(2, "0")}</span><div class="relic-plinth">${sprite(r.sprite)}<i></i></div><h2>${owned ? r.name : "???"}</h2><span class="relic-seal">${owned ? uiIcon("check") : "· · ·"}</span></button>`;
@@ -786,11 +732,11 @@ function bindView(): void {
     .forEach((b) => {
       b.onclick = () => {
         if (!buyPrestigeUpgrade(state, b.dataset.prestigeBuy!)) return;
-        const y = window.scrollY;
+        const y = document.querySelector<HTMLElement>("#screen")!.scrollTop;
         save();
         chime(3);
         renderView();
-        window.scrollTo(0, y);
+        document.querySelector<HTMLElement>("#screen")!.scrollTop = y;
       };
     });
   document
@@ -925,10 +871,6 @@ function update(): void {
   text("total-score", showExact ? n.toLocaleString("en-US") : format(n));
   const exact = document.querySelector("#total-score");
   if (exact) exact.classList.toggle("exact", showExact);
-  const fill = document.querySelector<HTMLElement>("#gate-progress");
-  if (fill) fill.style.width = progress() + "%";
-  const prog = document.querySelector("#gate-progress-text");
-  if (prog) prog.innerHTML = progress().toFixed(1) + "<small> / 100</small>";
   const factorsBox = document.querySelector("#score-factors");
   if (factorsBox) {
     const html = factors();
@@ -958,9 +900,6 @@ function update(): void {
   document
     .querySelectorAll<HTMLElement>('[data-nav="prestige"]')
     .forEach((b) => b.classList.toggle("prestige-ready", canPrestige(state)));
-  const bar = document.querySelector("#gate-prestige");
-  if (bar && canPrestige(state))
-    bar.innerHTML = `Prestige · +${prestigeReward(state)} shards ${uiIcon("prestige")}`;
   const rebirth = document.querySelector<HTMLButtonElement>("#prestige-now");
   if (rebirth) {
     rebirth.disabled = !canPrestige(state);
@@ -972,18 +911,11 @@ function update(): void {
     const i = Number(el.dataset.worldScore);
     el.innerHTML = `${format(state.worlds[i].score)} <small>${WORLDS[i].noun}</small>`;
   });
-  document.querySelectorAll<HTMLElement>("[data-mini]").forEach((el) => {
-    const i = Number(el.dataset.mini);
-    el.textContent = available(i)
-      ? format(state.worlds[i].score)
-      : format(WORLDS[i].unlock);
-  });
   if (view === "world") {
     const w = state.worlds[current];
     text("world-score", format(w.score));
     text("world-bank", format(w.bank));
     text("world-rate", format(rate(w, state)) + "/s");
-    text("world-total", format(n));
     text(
       "world-multiplier",
       "×" + format(multiplier(w) * productionBoost(state, current)),
@@ -1016,33 +948,6 @@ function update(): void {
             : `LV ${w.resonance} · ×${format(multiplier(w) * productionBoost(state, current))}`,
       );
     }
-    const equation = document.querySelector<HTMLElement>("#world-equation");
-    const equationKey = state.worlds
-      .filter((_, i) => available(i))
-      .map((w) => format(w.score))
-      .join(":");
-    if (equation && equation.dataset.key !== equationKey) {
-      equation.dataset.key = equationKey;
-      equation.innerHTML = factors();
-      equation
-        .querySelectorAll<HTMLButtonElement>("[data-world]")
-        .forEach((b) => (b.onclick = () => openWorld(Number(b.dataset.world))));
-    }
-    document.querySelectorAll<HTMLElement>("[data-milestone]").forEach((el) => {
-      if (
-        w.score >= Number(el.dataset.milestone) &&
-        !el.classList.contains("achieved")
-      ) {
-        el.classList.add("achieved");
-        el.querySelector("img")!.src =
-          import.meta.env.BASE_URL + "sprites/coin.png";
-      }
-    });
-    document
-      .querySelectorAll<HTMLButtonElement>(".world-tabs [data-world]")
-      .forEach((b) =>
-        b.classList.toggle("locked", !available(Number(b.dataset.world))),
-      );
   }
 }
 function modal(html: string): HTMLDialogElement {
@@ -1058,7 +963,7 @@ function modal(html: string): HTMLDialogElement {
 }
 function showSettings(): void {
   const d = modal(
-    `<div class="eyebrow">PREFERENCES</div><h2 id="modal-title">Make yourself at home.</h2><div class="setting-list"><button class="setting-row" id="setting-sound">${uiIcon("sound")}<span>Sound</span><span class="toggle ${state.sound ? "on" : ""}" aria-hidden="true"></span></button><button class="setting-row" id="setting-motion">${uiIcon("star")}<span>Motion</span><span class="toggle ${state.motion ? "on" : ""}" aria-hidden="true"></span></button><button class="setting-row" id="fullscreen">${uiIcon("full")}<span>Full screen</span>${uiIcon("arrow")}</button>${deferredInstall ? `<button class="setting-row" id="install-app">${uiIcon("download")}<span>Install game</span>${uiIcon("arrow")}</button>` : ""}</div><div class="settings-divider"></div><div class="save-actions"><button class="secondary-button" id="export-save">${uiIcon("download")}Export save</button><button class="secondary-button" id="import-save">${uiIcon("upload")}Import save</button><input id="save-file" type="file" accept="application/json,.json" hidden/></div><button class="reset-button" id="reset-save">Start over</button><div class="settings-version">MILLION BILLION TRILLION <span>v0.3</span></div>`,
+    `<h2 id="modal-title">Settings</h2><div class="setting-list"><button class="setting-row" id="setting-sound">${uiIcon("sound")}<span>Sound</span><span class="toggle ${state.sound ? "on" : ""}" aria-hidden="true"></span></button><button class="setting-row" id="setting-motion">${uiIcon("star")}<span>Motion</span><span class="toggle ${state.motion ? "on" : ""}" aria-hidden="true"></span></button><button class="setting-row" id="fullscreen">${uiIcon("full")}<span>Full screen</span>${uiIcon("arrow")}</button>${deferredInstall ? `<button class="setting-row" id="install-app">${uiIcon("download")}<span>Install game</span>${uiIcon("arrow")}</button>` : ""}</div><div class="settings-divider"></div><div class="save-actions"><button class="secondary-button" id="export-save">${uiIcon("download")}Export save</button><button class="secondary-button" id="import-save">${uiIcon("upload")}Import save</button><input id="save-file" type="file" accept="application/json,.json" hidden/></div><button class="reset-button" id="reset-save">Start over</button>`,
   );
   const wireToggle = (id: string, key: "sound" | "motion") => {
     const b = d.querySelector<HTMLButtonElement>(id)!;
@@ -1145,8 +1050,6 @@ function showSettings(): void {
         state = freshState();
         plays.fill(undefined);
         lit = [true, true];
-        seen.clear();
-        seen.add(0);
         save();
         syncPreferences();
         confirmation.close();

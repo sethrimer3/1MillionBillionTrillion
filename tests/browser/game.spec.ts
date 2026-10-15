@@ -45,13 +45,15 @@ test("first world, uninterrupted unlock, helpers, relics, and save reload", asyn
   await expect(page.getByRole("button", { name: "How to play" })).toHaveCount(
     0,
   );
-  await page.locator('.mini-world[data-world="0"]').click();
+  await page.locator('.gate-socket[data-world="0"]').click();
   for (let i = 0; i < 6; i++)
     await page.getByRole("button", { name: "Feed the fire" }).click();
   await expect(page.locator('[data-world-page="0"]')).toBeVisible();
-  await expect(page.locator('.world-tabs [data-world="1"]')).not.toHaveClass(
-    /locked/,
+  await page.getByRole("button", { name: "Worlds", exact: true }).click();
+  await expect(page.locator('.world-card[data-world="1"]')).toHaveClass(
+    /available/,
   );
+  await page.locator('.world-card[data-world="0"]').click();
   await page.locator("#buy-helper").click();
   await expect(page.locator("#world-rate")).toHaveText("2/s");
   const before = await savedScore(page, 0);
@@ -59,7 +61,7 @@ test("first world, uninterrupted unlock, helpers, relics, and save reload", asyn
   expect(await savedScore(page, 0)).toBeGreaterThan(before);
   await page.reload();
   await expect(page.locator("#helper-level")).toContainText("1 ·");
-  const nav = page.locator(".bottom-dock:visible, .side-rail:visible");
+  const nav = page.locator(".scene-navigation");
   await nav.getByRole("button", { name: "Relics" }).click();
   await expect(page.locator(".relic-card.owned")).toHaveCount(3);
   await page.locator('[data-relic="spark"]').click();
@@ -133,12 +135,14 @@ test("the dream echoes a sequence and a completed gate stays open", async ({
   await page.goto("/#relics");
   await expect(page.locator('[data-relic="echo"]')).toHaveClass(/owned/);
   await page.goto("/#gate");
+  const arch = await page.locator(".gate-sprite").boundingBox();
   await page
     .getByRole("button", { name: "Open the gate", exact: true })
     .click();
   await expect(page.locator(".answer")).toHaveText("42.");
   await page.getByRole("button", { name: "Stay a little longer" }).click();
   await expect(page.locator("#gate-stage")).toHaveClass(/is-open/);
+  expect(await page.locator(".gate-sprite").boundingBox()).toEqual(arch);
   await page.reload();
   await expect(page.locator("#gate-stage")).toHaveClass(/is-open/);
 });
@@ -186,7 +190,7 @@ test("settings, save export and recovery, and offline relaunch", async ({
   await context.setOffline(true);
   await page.reload();
   await expect(page.locator(".gate-stage")).toBeVisible();
-  await page.locator('.mini-world[data-world="0"]').click();
+  await page.locator('.gate-socket[data-world="0"]').click();
   await page.getByRole("button", { name: "Feed the fire" }).click();
   expect(
     await page
@@ -207,11 +211,55 @@ test("navigation and layouts fit narrow screens without horizontal scrolling", a
       await page.goto("/#" + route);
       await expect(page.locator("#screen")).toBeVisible();
       expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
+        await page.evaluate(() => {
+          const screen = document.querySelector<HTMLElement>("#screen")!;
+          return (
+            document.documentElement.scrollWidth <= innerWidth &&
+            screen.scrollWidth <= screen.clientWidth
+          );
+        }),
         `${route} at ${width}px`,
       ).toBe(true);
     }
   }
+});
+
+test("the gate fills the viewport and its carved crystals are direct entrances", async ({
+  page,
+}) => {
+  await page.goto("/#gate");
+  await expect(
+    page.locator(
+      ".app-header, .side-rail, .bottom-dock, .world-shelf, .gate-status",
+    ),
+  ).toHaveCount(0);
+  for (const [width, height] of [
+    [320, 740],
+    [390, 844],
+    [808, 580],
+    [1440, 1000],
+    [844, 390],
+  ]) {
+    await page.setViewportSize({ width, height });
+    const stage = await page.locator("#gate-stage").boundingBox();
+    expect(stage).toEqual({ x: 0, y: 0, width, height });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollHeight <= innerHeight,
+      ),
+    ).toBe(true);
+    const navigation = await page.locator(".scene-navigation").boundingBox();
+    expect(navigation!.x).toBeLessThan(20);
+    expect(navigation!.y).toBeLessThan(20);
+    expect(navigation!.x + navigation!.width).toBeLessThanOrEqual(width);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.gate-socket[data-world="1"]').click();
+  await expect(page).toHaveURL(/#gate$/);
+  await page.locator('.gate-socket[data-world="0"]').click();
+  await expect(
+    page.getByRole("button", { name: "Feed the fire" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "The gate", exact: true }).click();
+  await expect(page.locator("#gate-stage")).toBeVisible();
 });

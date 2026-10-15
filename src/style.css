@@ -74,60 +74,6 @@ p {
   padding-top: 79px;
   min-height: 100dvh;
 }
-.app-header {
-  height: 79px;
-  position: fixed;
-  inset: 0 0 auto;
-  z-index: 12;
-  background: #12131ded;
-  border-bottom: 1px solid #2a2939;
-  display: flex;
-  align-items: center;
-  padding: 0 31px;
-  gap: 34px;
-  backdrop-filter: blur(18px);
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.brand-sprite {
-  width: 31px;
-  height: 42px;
-  filter: brightness(1.35);
-}
-.brand-title {
-  font-family: var(--pixel);
-  font-size: 18px;
-  color: #c3bac9;
-  letter-spacing: -0.5px;
-  white-space: nowrap;
-}
-.brand-title > span {
-  color: #9d886b;
-}
-.header-location {
-  margin-left: 50px;
-  font-size: 10px;
-  letter-spacing: 0.7px;
-  color: #79798d;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.header-location i {
-  width: 4px;
-  height: 4px;
-  background: #7c7591;
-  transform: rotate(45deg);
-}
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  margin-left: auto;
-}
 .icon-button {
   width: 36px;
   height: 36px;
@@ -157,21 +103,6 @@ p {
 }
 .save-light[data-failed] {
   background: #ce8d75;
-}
-.side-rail {
-  position: fixed;
-  left: 0;
-  top: 79px;
-  bottom: 0;
-  width: 92px;
-  border-right: 1px solid #292837;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 32px;
-  gap: 13px;
-  z-index: 11;
-  background: #12131c;
 }
 .nav-item {
   position: relative;
@@ -220,31 +151,6 @@ p {
   border-radius: 50%;
 }
 .relic-dot[hidden] {
-  display: none;
-}
-.rail-bottom {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 13px;
-  margin-bottom: 26px;
-}
-.rail-mark {
-  writing-mode: vertical-rl;
-  letter-spacing: 4px;
-  font-family: var(--pixel);
-  font-size: 10px;
-  color: #414252;
-}
-.version {
-  font-family: var(--pixel);
-  font-size: 10px;
-  color: #5d5666;
-  border: 1px solid #393342;
-  padding: 4px 5px;
-}
-.bottom-dock {
   display: none;
 }
 #screen {
@@ -421,8 +327,7 @@ h1 {
   min-height: 26px;
   flex-wrap: wrap;
 }
-.score-factors button,
-#world-equation button {
+.score-factors button {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -437,8 +342,7 @@ h1 {
   height: 12px;
   filter: none;
 }
-.score-factors b,
-#world-equation b {
+.score-factors b {
   font-size: 9px;
   font-weight: 400;
   color: #666075;
@@ -827,71 +731,6 @@ h1 {
 .is-open .door-seam {
   display: none;
 }
-.gate-status {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  margin: 18px 2px 0;
-  font-family: var(--pixel);
-  font-size: 12px;
-  color: #8b8197;
-}
-.gate-status-label {
-  font-family: var(--pixel);
-  font-size: 9px;
-  letter-spacing: 1.8px;
-  color: #8b7d83;
-}
-.seal-progress {
-  height: 3px;
-  flex: 1;
-  background: #292535;
-  position: relative;
-}
-.seal-progress i {
-  display: block;
-  height: 100%;
-  background: #a38a6b;
-  position: relative;
-  min-width: 2px;
-  transition: width 0.3s;
-}
-.seal-progress i:after {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: -2px;
-  width: 3px;
-  height: 7px;
-  background: #dac193;
-}
-.gate-status small {
-  color: #565369;
-  font-size: 10px;
-  margin-left: 3px;
-}
-.world-shelf {
-  margin-top: 32px;
-}
-.shelf-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.shelf-heading h2 {
-  font-family: var(--pixel);
-  font-size: 18px;
-  font-weight: 500;
-  margin: 0;
-  color: #b3acbf;
-}
-.shelf-heading h2 > span {
-  font-family: var(--pixel);
-  font-size: 12px;
-  color: #58546b;
-  margin-left: 12px;
-}
 .text-action {
   display: flex;
   align-items: center;
@@ -908,70 +747,6 @@ h1 {
 }
 .text-action:hover {
   color: #e2c59c;
-}
-.shelf-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-.mini-world {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  text-align: left;
-  border: 1px solid #37303d;
-  border-radius: 4px;
-  background: linear-gradient(135deg, #25202a, #1a1b26);
-  padding: 14px 12px;
-  color: #bbb2c2;
-  position: relative;
-}
-.mini-world:hover {
-  border-color: var(--world);
-  transform: translateY(-2px);
-}
-.mini-world > img {
-  width: 39px;
-  height: 39px;
-}
-.mini-world > span {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-}
-.mini-world strong {
-  font-family: var(--pixel);
-  font-size: 15px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-.mini-world small {
-  font-family: var(--pixel);
-  font-size: 12px;
-  color: var(--world);
-}
-.mini-world > svg {
-  width: 13px;
-  height: 13px;
-  color: var(--world);
-  margin-left: auto;
-  flex: none;
-}
-.mini-world.locked {
-  background: #171923;
-  border-color: #2c2a3b;
-}
-.mini-world.locked > img {
-  filter: grayscale(1) brightness(0.5);
-  opacity: 0.7;
-}
-.mini-world.locked strong {
-  color: #797388;
-}
-.mini-world.locked small,
-.mini-world.locked > svg {
-  color: #5e5a70;
 }
 .worlds-page,
 .relic-page {
@@ -1265,55 +1040,6 @@ h1 {
   max-width: 1150px;
   margin: auto;
 }
-.world-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 17px;
-  margin-bottom: 34px;
-}
-.world-tabs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.world-tabs > button {
-  width: 38px;
-  height: 38px;
-  padding: 5px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  position: relative;
-}
-.world-tabs > button:hover {
-  background: #242332;
-}
-.world-tabs > button.active {
-  background: #2c2633;
-  border-color: #5f4958;
-}
-.world-tabs > button.active:after {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  width: 3px;
-  height: 3px;
-  background: var(--world);
-  left: calc(50% - 1px);
-}
-.world-tabs img {
-  width: 100%;
-  height: 100%;
-}
-.world-tabs > button.locked img {
-  filter: grayscale(1) brightness(0.4);
-}
-.world-index {
-  font-family: var(--pixel);
-  font-size: 11px;
-  color: #74677f;
-}
 .world-heading {
   margin-bottom: 25px;
 }
@@ -1461,34 +1187,6 @@ h1 {
   font-size: 15px;
   color: var(--world);
 }
-.world-milestones {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 36px;
-  padding: 21px 0;
-}
-.milestone {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  opacity: 0.35;
-  color: #81708e;
-  font-family: var(--pixel);
-  font-size: 12px;
-}
-.milestone img {
-  width: 23px;
-  height: 23px;
-  filter: grayscale(1);
-}
-.milestone.achieved {
-  opacity: 1;
-  color: #b89b78;
-}
-.milestone.achieved img {
-  filter: none;
-}
 .world-shop {
   padding-top: 0;
 }
@@ -1612,45 +1310,6 @@ h1 {
 .shop-row.unseen > img {
   filter: brightness(0);
   opacity: 0.4;
-}
-.world-total {
-  margin-top: 25px;
-  border-top: 1px dashed #393044;
-  padding-top: 23px;
-  text-align: center;
-}
-.world-total > span {
-  display: block;
-  font-size: 9px;
-  letter-spacing: 2px;
-  color: #665c77;
-}
-.world-total > strong {
-  font-family: var(--pixel);
-  font-size: 24px;
-  display: block;
-  color: #b3a3bf;
-  font-weight: 400;
-  margin-top: 9px;
-}
-#world-equation {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-  justify-content: center;
-  margin-top: 10px;
-}
-#world-equation .gem {
-  width: 7px;
-  height: 10px;
-}
-#world-equation button {
-  font-size: 9px;
-  gap: 2px;
-}
-#world-equation b {
-  font-size: 9px;
 }
 .activity-0 {
   background: radial-gradient(
@@ -3057,20 +2716,8 @@ dialog h2 {
   .app-shell {
     padding-left: 80px;
   }
-  .side-rail {
-    width: 80px;
-  }
-  .side-rail .nav-item {
-    width: 60px;
-  }
   .nav-item.selected:before {
     left: -10px;
-  }
-  .brand-title {
-    font-size: 16px;
-  }
-  .header-location {
-    margin-left: 10px;
   }
   .gate-stage {
     height: 575px;
@@ -3095,20 +2742,6 @@ dialog h2 {
   }
   .gate-score .total-number {
     font-size: 47px;
-  }
-  .mini-world {
-    padding: 12px 10px;
-    gap: 7px;
-  }
-  .mini-world > img {
-    width: 31px;
-    height: 31px;
-  }
-  .mini-world strong {
-    font-size: 18px;
-  }
-  .mini-world > svg {
-    display: none;
   }
   .world-grid {
     gap: 15px;
@@ -3149,16 +2782,6 @@ dialog h2 {
   .activity-pips i {
     width: 15px;
   }
-  .world-nav {
-    margin-bottom: 29px;
-  }
-  .world-tabs {
-    gap: 4px;
-  }
-  .world-tabs > button {
-    width: 33px;
-    height: 33px;
-  }
   .relic-card {
     height: 191px;
   }
@@ -3170,9 +2793,6 @@ dialog h2 {
   }
 }
 @media (max-width: 900px) {
-  .header-location {
-    display: none;
-  }
   .world-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
@@ -3207,10 +2827,6 @@ dialog h2 {
   .shop-row {
     grid-column: 1 / span 2;
   }
-  .world-total {
-    grid-column: 1 / span 2;
-    margin-top: 8px;
-  }
   .activity-stage {
     height: 380px;
   }
@@ -3241,9 +2857,6 @@ dialog h2 {
   .pocket-bar {
     padding: 13px;
   }
-  .world-milestones {
-    padding: 20px 0 13px;
-  }
   .relic-card {
     height: 190px;
   }
@@ -3256,126 +2869,16 @@ dialog h2 {
   .relic-card:nth-child(3n) {
     border-right: 0;
   }
-  .shelf-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .mini-world > svg {
-    display: block;
-  }
-  .mini-world {
-    padding: 12px 14px;
-  }
-  .mini-world strong {
-    font-size: 21px;
-  }
-  .mini-world > img {
-    width: 39px;
-    height: 39px;
-  }
   .hidden-sigil {
     right: 8%;
-  }
-  .world-tabs {
-    gap: 3px;
-  }
-  .world-index {
-    font-size: 9px;
-  }
-  .world-tabs > button {
-    width: 31px;
-    height: 31px;
-  }
-  .world-nav {
-    gap: 8px;
-  }
-  .world-nav > .text-action {
-    font-size: 9px;
-    gap: 4px;
-  }
-  .world-nav > .text-action > svg {
-    width: 15px;
   }
 }
 @media (max-width: 650px) {
   .app-shell {
     padding: 65px 0 calc(79px + env(safe-area-inset-bottom));
   }
-  .app-header {
-    height: 65px;
-    padding: 0 18px;
-    gap: 12px;
-  }
-  .brand {
-    gap: 8px;
-  }
-  .brand-sprite {
-    width: 26px;
-    height: 34px;
-  }
-  .brand-title {
-    font-size: 14px;
-    letter-spacing: -0.4px;
-  }
-  .header-actions {
-    gap: 4px;
-  }
-  .header-actions .icon-button {
-    width: 30px;
-    height: 34px;
-  }
-  .header-actions svg {
-    width: 17px;
-    height: 17px;
-  }
   .save-light {
     margin-right: 5px;
-    width: 3px;
-    height: 3px;
-  }
-  .side-rail {
-    display: none;
-  }
-  .bottom-dock {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 7px 20px calc(7px + env(safe-area-inset-bottom));
-    height: calc(74px + env(safe-area-inset-bottom));
-    background: #151521f5;
-    border-top: 1px solid #383040;
-    z-index: 15;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 -10px 40px #090c171a;
-  }
-  .bottom-dock .nav-item {
-    width: 90px;
-    height: 55px;
-    gap: 5px;
-    font-size: 9px;
-    letter-spacing: 0.3px;
-  }
-  .bottom-dock .nav-item > svg {
-    width: 21px;
-    height: 21px;
-  }
-  .bottom-dock .nav-item.selected {
-    background: transparent;
-    color: #d5b785;
-  }
-  .bottom-dock .nav-item.selected:before {
-    height: 2px;
-    width: 18px;
-    left: calc(50% - 9px);
-    top: -8px;
-    box-shadow: 0 0 9px #d8b77333;
-  }
-  .bottom-dock .relic-dot {
-    top: 7px;
-    right: 29px;
     width: 3px;
     height: 3px;
   }
@@ -3534,34 +3037,6 @@ dialog h2 {
   .sky-moon:before {
     background: #232333;
   }
-  .gate-status {
-    margin-top: 15px;
-    gap: 12px;
-    font-size: 11px;
-  }
-  .gate-status-label {
-    font-size: 9px;
-    letter-spacing: 1.4px;
-  }
-  .gate-status small {
-    font-size: 9px;
-  }
-  .seal-progress {
-    height: 2px;
-  }
-  .world-shelf {
-    margin-top: 27px;
-  }
-  .shelf-heading {
-    margin-bottom: 15px;
-  }
-  .shelf-heading h2 {
-    font-size: 25px;
-  }
-  .shelf-heading h2 > span {
-    font-size: 10px;
-    margin-left: 8px;
-  }
   .text-action {
     font-size: 9px;
     gap: 7px;
@@ -3569,28 +3044,6 @@ dialog h2 {
   .text-action svg {
     width: 15px;
     height: 15px;
-  }
-  .shelf-grid {
-    gap: 9px;
-  }
-  .mini-world {
-    padding: 11px 8px;
-    gap: 7px;
-    border-radius: 3px;
-  }
-  .mini-world > img {
-    width: 34px;
-    height: 34px;
-  }
-  .mini-world strong {
-    font-size: 18px;
-  }
-  .mini-world small {
-    font-size: 11px;
-  }
-  .mini-world > svg {
-    width: 11px;
-    height: 11px;
   }
   .world-grid {
     gap: 14px;
@@ -3666,34 +3119,6 @@ dialog h2 {
     left: 12px;
     top: 38px;
   }
-  .world-page .world-nav {
-    margin-top: -4px;
-    margin-bottom: 26px;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    row-gap: 18px;
-  }
-  .world-nav > .text-action {
-    grid-row: 1;
-    grid-column: 1;
-    font-size: 9px;
-  }
-  .world-tabs {
-    grid-row: 2;
-    grid-column: 1 / span 3;
-    justify-content: space-between;
-    gap: 4px;
-  }
-  .world-index {
-    grid-row: 1;
-    grid-column: 3;
-    font-size: 9px;
-  }
-  .world-tabs > button {
-    width: 35px;
-    height: 35px;
-    padding: 4px;
-  }
   .world-heading {
     margin-bottom: 22px;
   }
@@ -3747,18 +3172,6 @@ dialog h2 {
   .world-multiplier {
     font-size: 14px;
   }
-  .world-milestones {
-    padding: 16px 0;
-    gap: 31px;
-  }
-  .milestone {
-    font-size: 10px;
-    gap: 6px;
-  }
-  .milestone img {
-    width: 20px;
-    height: 20px;
-  }
   .world-shop {
     margin-top: 9px;
     gap: 0 10px;
@@ -3807,18 +3220,6 @@ dialog h2 {
   }
   .upgrade-cost small {
     font-size: 16px;
-  }
-  .world-total {
-    margin-top: 13px;
-    padding-top: 22px;
-    padding-bottom: 6px;
-  }
-  .world-total > span {
-    font-size: 9px;
-    letter-spacing: 1.8px;
-  }
-  .world-total > strong {
-    font-size: 23px;
   }
   .campfire {
     width: 158px;
@@ -4075,23 +3476,6 @@ dialog h2 {
   }
 }
 @media (max-width: 370px) {
-  .app-header {
-    padding-left: 13px;
-    padding-right: 13px;
-  }
-  .brand-title {
-    font-size: 12px;
-  }
-  .brand {
-    gap: 7px;
-  }
-  .brand-sprite {
-    width: 24px;
-    height: 32px;
-  }
-  .header-actions {
-    gap: 1px;
-  }
   .save-light {
     display: none;
   }
@@ -4136,16 +3520,6 @@ dialog h2 {
     font-size: 9px;
     letter-spacing: 0.8px;
   }
-  .mini-world strong {
-    font-size: 16px;
-  }
-  .mini-world > img {
-    width: 28px;
-    height: 28px;
-  }
-  .mini-world {
-    gap: 5px;
-  }
   .world-card h2 {
     font-size: 20px;
   }
@@ -4166,10 +3540,6 @@ dialog h2 {
   .world-heading h1 {
     font-size: 30px;
   }
-  .world-tabs > button {
-    width: 30px;
-    height: 32px;
-  }
   .activity-stage {
     height: 310px;
   }
@@ -4178,9 +3548,6 @@ dialog h2 {
   }
   .activity-pips i {
     width: 11px;
-  }
-  .world-milestones {
-    gap: 24px;
   }
   .shop-heading h2 {
     font-size: 21px;

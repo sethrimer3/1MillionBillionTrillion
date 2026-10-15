@@ -76,8 +76,12 @@ test("a small RPG opening expands through earned combat, equipment, attributes, 
   if (info.project.name === "mobile") {
     await page.evaluate(() => document.fonts.ready);
     const attack = await page.locator(".chosen-command").boundingBox();
-    const dock = await page.locator(".bottom-dock").boundingBox();
-    expect(attack!.y + attack!.height).toBeLessThanOrEqual(dock!.y);
+    const viewport = await page.locator("#screen").boundingBox();
+    const navigation = await page.locator(".scene-navigation").boundingBox();
+    expect(attack!.y + attack!.height).toBeLessThanOrEqual(
+      viewport!.y + viewport!.height,
+    );
+    expect(attack!.y).toBeGreaterThan(navigation!.y + navigation!.height);
   }
   if (info.project.name === "mobile") await page.locator("#rpg-enemy").tap();
   else await page.locator("#rpg-enemy").click();

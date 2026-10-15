@@ -167,13 +167,11 @@ test("crystals stay locked before prestige and the larger gate targets and tree 
   late.prestige = { count: 5, shards: 10, upgrades: ["iridescent", "void"] };
   late.secret = true;
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page
-    .locator("#save-file")
-    .setInputFiles({
-      name: "late.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(JSON.stringify(late)),
-    });
+  await page.locator("#save-file").setInputFiles({
+    name: "late.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(late)),
+  });
   await expect(page.locator("#modal")).not.toBeVisible();
   expect((await saved(page)).prestige.count).toBe(5);
   for (const width of [320, 360, 390, 768, 1440]) {
@@ -181,16 +179,21 @@ test("crystals stay locked before prestige and the larger gate targets and tree 
     for (const route of ["gate", "prestige", "world/7", "world/8"]) {
       await page.goto("/#" + route);
       expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
+        await page.evaluate(() => {
+          const screen = document.querySelector<HTMLElement>("#screen")!;
+          return (
+            document.documentElement.scrollWidth <= innerWidth &&
+            screen.scrollWidth <= screen.clientWidth
+          );
+        }),
         `${route} at ${width}`,
       ).toBe(true);
     }
   }
   await page.goto("/#gate");
   await expect(page.locator(".door-inscription")).toContainText("Quintillion");
-  await expect(page.locator(".gate-target-name")).toContainText(
-    "42 Hundred Thousand",
+  await expect(page.locator("#open-gate")).toHaveAttribute(
+    "title",
+    /42 Hundred Thousand/,
   );
 });

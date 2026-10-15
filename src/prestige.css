@@ -3,25 +3,6 @@
   max-width: 1150px;
   margin: auto;
 }
-.gate-prestige-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 20px 0 8px;
-  color: #a89cb6;
-  font-size: 11px;
-  letter-spacing: 1px;
-}
-.gate-prestige-bar > span {
-  display: grid;
-  gap: 5px;
-}
-.gate-prestige-bar small {
-  color: #787587;
-  font-size: 9px;
-  letter-spacing: 0.5px;
-}
 .nav-item.prestige-ready {
   color: #d9d1ae;
 }
@@ -45,14 +26,6 @@
   top: 27%;
   height: 28%;
   letter-spacing: 0.5px;
-}
-.gate-target-name {
-  font-family: var(--pixel);
-  font-size: 18px;
-  line-height: 1.2;
-  color: #b5a69e;
-  text-align: center;
-  padding: 17px 8px 0;
 }
 .door-inscription b {
   font-weight: 400;
@@ -656,28 +629,11 @@
   .shard-balance b {
     font-size: 20px;
   }
-  .gate-prestige-bar {
-    padding: 14px 0 4px;
-    font-size: 10px;
-  }
-  .gate-prestige-bar .text-action {
-    font-size: 10px;
-  }
-  .bottom-dock {
-    padding-left: 8px;
-    padding-right: 8px;
-  }
-  .bottom-dock .nav-item {
-    width: 25%;
-  }
   .door-inscription {
     font-size: 9px;
     gap: 2px;
     top: 26%;
     line-height: 1;
-  }
-  .gate-target-name {
-    font-size: 21px;
   }
   .prism-heart {
     width: 125px;
@@ -702,9 +658,4 @@
 }
 
 @media (max-width: 370px) {
-  .world-tabs > button {
-    width: 28px;
-    flex-shrink: 1;
-    padding: 3px;
-  }
 }
