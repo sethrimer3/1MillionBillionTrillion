@@ -29,7 +29,7 @@ export function uiIcon(name: string, cls = ""): string {
   return `<svg class="ui-icon ${cls}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><image href="${import.meta.env.BASE_URL}sprites/ui-${icon}.png" width="64" height="64"/></svg>`;
 }
 export const sprite = (name: string, cls = "", alt = "") =>
-  `<img class="sprite ${cls}" src="${import.meta.env.BASE_URL}sprites/${name}.${name.startsWith("rpg-") || name.startsWith("scene-") || name.startsWith("arena-") ? "svg" : "png"}" alt="${alt}" draggable="false" width="48" height="48"/>`;
+  `<img class="sprite ${cls}" src="${import.meta.env.BASE_URL}sprites/${name}.${name.startsWith("rpg-") || name.startsWith("scene-") || name.startsWith("arena-") || name.startsWith("cosmos-") ? "svg" : "png"}" alt="${alt}" draggable="false" width="48" height="48"/>`;
 export function gem(i: number, lit: boolean, cls = "") {
   const index = Math.max(0, Math.min(6, i));
   const image = `gem-${index}${lit ? "" : "-off"}`;

@@ -101,7 +101,7 @@ test("eight migrated worlds, regrowing crops, resonance, and torch ambience", as
         : i === 4
           ? page.getByRole("button", { name: "Storm cloud", exact: true })
           : i === 5
-            ? page.getByRole("button", { name: "Bright star", exact: true })
+            ? page.getByRole("button", { name: "Catch firefly 1", exact: true })
             : page.locator("[data-tap]").first();
     await target.click();
     expect(await savedScore(page, i)).toBeGreaterThan(before);

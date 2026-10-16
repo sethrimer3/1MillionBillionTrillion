@@ -12,6 +12,14 @@ import {
   tickArena,
   type ArenaState,
 } from "./arena.ts";
+import {
+  createCosmos,
+  restoreCosmos,
+  actCosmos,
+  tickCosmos,
+  type CosmosState,
+  type CosmosAction,
+} from "./cosmos.ts";
 export const GOAL = 10n ** 27n;
 export const SAVE_KEY = "mbt-save-v1";
 export const WORLDS = [
@@ -76,15 +84,15 @@ export const WORLDS = [
     unlock: 10000n,
   },
   {
-    name: "Midnight pond",
-    title: "Make a wish in the quiet.",
+    name: "Firefly field",
+    title: "A pocketful of little skies.",
     color: "#888dc0",
     pale: "#e9e8f5",
-    kind: "moon",
-    noun: "wishes",
-    action: "Make a wish",
-    auto: "Moon moth",
-    desc: "The stars are listening.",
+    kind: "cosmos-firefly",
+    noun: "light",
+    action: "Catch a firefly",
+    auto: "Lantern net",
+    desc: "A field. A sky. Everything beyond.",
     unlock: 1000000n,
   },
   {
@@ -143,6 +151,7 @@ export type State = {
   relics: string[];
   rpg: RpgState;
   arena: ArenaState;
+  cosmos: CosmosState;
   prestige: { count: number; shards: number; upgrades: string[] };
 };
 export function freshState(): State {
@@ -164,6 +173,7 @@ export function freshState(): State {
     relics: [],
     rpg: createRpg(),
     arena: createArena(),
+    cosmos: createCosmos(),
     prestige: { count: 0, shards: 0, upgrades: [] },
   };
 }
@@ -411,6 +421,12 @@ function seedWorlds(state: State) {
   }
   if (hasUpgrade(state, "pockets"))
     state.arena.money = Math.max(state.arena.money, 100);
+  if (hasUpgrade(state, "pockets"))
+    state.cosmos.glow = Math.max(state.cosmos.glow, 100);
+  state.cosmos.upgrades.nets = Math.max(
+    state.cosmos.upgrades.nets,
+    hasUpgrade(state, "seeds") ? 3 : hasUpgrade(state, "pockets") ? 2 : 0,
+  );
 }
 export function buyPrestigeUpgrade(state: State, id: string): boolean {
   const node = PRESTIGE_UPGRADES.find((n) => n.id === id);
@@ -445,6 +461,7 @@ export function prestige(state: State): boolean {
   state.worlds = freshState().worlds;
   state.rpg = createRpg();
   state.arena = createArena();
+  state.cosmos = createCosmos();
   state.unlocked = 1;
   state.secret = true;
   state.won = false;
@@ -512,7 +529,7 @@ export function advance(state: State, seconds: number) {
     : 0;
   for (let i = 0; i < state.worlds.length; i++) {
     if (!worldAvailable(state, i)) continue;
-    if (i === 3) continue;
+    if (i === 3 || i === 5) continue;
     const w = state.worlds[i];
     credit(state, i, elapsed * rate(w, state));
   }
@@ -535,7 +552,38 @@ export function advance(state: State, seconds: number) {
     for (let n = 0; n < clocks; n++)
       rewardRenown(state, tickRpg(state.rpg, elapsed));
   }
+  if (worldAvailable(state, 5)) {
+    const glow = tickCosmos(
+      state.cosmos,
+      elapsed * cycleSpeed(state) * idleBoost(state),
+    );
+    credit(
+      state,
+      5,
+      glow *
+        state.worlds[5].power *
+        multiplier(state.worlds[5]) *
+        productionBoost(state, 5),
+    );
+  }
   unlock(state);
+}
+export function cosmosAction(state: State, action: CosmosAction) {
+  if (!worldAvailable(state, 5)) return { changed: false, glow: 0 };
+  const result = actCosmos(state.cosmos, action);
+  if (result.changed) {
+    credit(
+      state,
+      5,
+      result.glow *
+        state.worlds[5].power *
+        multiplier(state.worlds[5]) *
+        productionBoost(state, 5),
+    );
+    if (action.kind === "catch" || action.kind === "star") state.clicks++;
+    unlock(state);
+  }
+  return result;
 }
 export function rewardRenown(state: State, amount: number): number {
   const gained =
@@ -596,7 +644,11 @@ export const RELICS = [
   { id: "perfect", name: "A kingdom in your pocket", sprite: "rpg-crown" },
   { id: "bloom", name: "A little constellation", sprite: "arena-ship-1" },
   { id: "storm", name: "Silver lining", sprite: "storm" },
-  { id: "constellation", name: "Written in stars", sprite: "moon" },
+  {
+    id: "constellation",
+    name: "Written in stars",
+    sprite: "cosmos-constellation",
+  },
   { id: "echo", name: "A familiar dream", sprite: "crystal" },
   { id: "resonance", name: "Strange frequency", sprite: "rune" },
   { id: "rainbow", name: "Every color", sprite: "prism" },
@@ -623,6 +675,7 @@ export function discoveries(state: State): string[] {
     state.won && "answer",
     state.rpg.cleared > 0 && "perfect",
     state.arena.merges > 0 && "bloom",
+    state.cosmos.made[1] > 0 && "constellation",
   ];
   return candidates.filter((id): id is string => !!id && discover(state, id));
 }
@@ -682,6 +735,13 @@ export function loadState(raw: string | null): State {
     base.motion = s.motion !== false;
     base.rpg = restoreRpg(s.rpg);
     base.arena = restoreArena(s.arena);
+    base.cosmos = restoreCosmos(s.cosmos);
+    if (!s.cosmos || typeof s.cosmos !== "object") {
+      base.cosmos.glow = Math.min(1e90, base.worlds[5].bank);
+      base.cosmos.earned = base.cosmos.glow;
+      base.cosmos.upgrades.nets = Math.min(40, base.worlds[5].helpers);
+      base.cosmos.upgrades.mesh = Math.min(50, base.worlds[5].power - 1);
+    }
     // Convert the former garden's unspent leaves once, on migration only.
     if (!s.arena || typeof s.arena !== "object")
       base.arena.money = base.worlds[3].bank;
