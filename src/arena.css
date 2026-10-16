@@ -1,0 +1,442 @@
+html[data-world="3"][data-view="world"] #screen {
+  padding: 0;
+  overflow: hidden;
+}
+.world-page[data-world-page="3"] {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+}
+.world-page[data-world-page="3"] > .world-heading {
+  display: none;
+}
+#arena-host {
+  height: 100%;
+}
+.arena-app {
+  height: 100%;
+  color: #e8e8c8;
+  background: #142c29 url("/sprites/arena-floor.svg");
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 226px;
+}
+.arena-field {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+.arena-hud {
+  position: absolute;
+  top: max(65px, calc(env(safe-area-inset-top) + 61px));
+  left: 19px;
+  right: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  z-index: 2;
+  pointer-events: none;
+}
+.arena-name > span {
+  color: #91ac86;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.arena-name h1 {
+  margin: 0;
+  color: #e0e7bf;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+.arena-wallet {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.arena-wallet .sprite {
+  width: 34px;
+  height: 34px;
+}
+.arena-wallet strong {
+  font-size: 27px;
+  font-weight: 500;
+  color: #f0e2a7;
+}
+.arena-stage {
+  position: absolute;
+  top: max(113px, calc(env(safe-area-inset-top) + 109px));
+  left: 20px;
+  right: 20px;
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  z-index: 2;
+  color: #a6bd91;
+  font-size: 11px;
+}
+.arena-stage > span {
+  white-space: nowrap;
+}
+.arena-stage-track {
+  height: 5px;
+  background: #0e211f;
+  flex: 1;
+  border: 1px solid #42634e;
+}
+.arena-stage-track i {
+  display: block;
+  height: 100%;
+  background: #b4ce99;
+  transition: width 0.2s;
+}
+.arena-canvas-wrap {
+  position: absolute;
+  top: max(139px, calc(env(safe-area-inset-top) + 135px));
+  left: 9px;
+  right: 9px;
+  bottom: 49px;
+}
+#arena-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: pan-x;
+}
+.arena-field-footer {
+  position: absolute;
+  bottom: 6px;
+  left: 19px;
+  right: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+#arena-count {
+  color: #9ab38e;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.arena-app button {
+  font-family: inherit;
+  color: #e3e9bf;
+  cursor: pointer;
+  border: 10px solid transparent;
+  border-image: url("/sprites/arena-panel.svg") 8 stretch;
+  background: #1d3530;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 0;
+  transition: filter 0.1s;
+}
+.arena-app button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.arena-app button:not(:disabled):active {
+  filter: brightness(1.35);
+  transform: translateY(1px);
+}
+.arena-app button:focus-visible {
+  outline: 2px dashed #f0dfa3;
+  outline-offset: 2px;
+}
+.arena-surge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 39px;
+  padding: 0 5px 0 0;
+  font-size: 12px;
+}
+.arena-surge .sprite {
+  width: 30px;
+  height: 30px;
+}
+.arena-surge.active:disabled {
+  opacity: 1;
+  color: #f6dfa1;
+}
+.arena-dock {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 2px solid #658266;
+  background: #192e29 url("/sprites/arena-floor.svg");
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 3;
+}
+.arena-tabs {
+  height: 42px;
+  display: flex;
+  border-bottom: 1px solid #455d48;
+  gap: 2px;
+  padding: 0 10px;
+}
+.arena-tabs button {
+  border: 0;
+  background: transparent;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  color: #879b80;
+  border-bottom: 3px solid transparent;
+}
+.arena-tabs button[aria-selected="true"] {
+  color: #e8e4b4;
+  border-bottom-color: #c4ce9a;
+}
+.arena-tabs .sprite {
+  width: 26px;
+  height: 26px;
+}
+.arena-dock-content {
+  height: calc(100% - 42px);
+  overflow: hidden;
+}
+.arena-hulls {
+  display: flex;
+  gap: 9px;
+  height: 100%;
+  overflow-x: auto;
+  padding: 10px 12px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #6e8964 #1a3029;
+  scroll-snap-type: x proximity;
+}
+.arena-hull {
+  flex: 0 0 151px;
+  min-width: 0;
+  scroll-snap-align: start;
+  padding: 0;
+}
+.arena-hull-heading {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  position: relative;
+}
+.arena-hull-heading > .sprite {
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+}
+.arena-hull-heading > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.arena-hull-heading strong {
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 500;
+}
+.arena-hull-heading small {
+  font-size: 10px;
+  color: #a5b28e;
+}
+.arena-hull-heading > b {
+  position: absolute;
+  right: 0;
+  top: 1px;
+  min-width: 17px;
+  padding: 1px 3px;
+  text-align: center;
+  font-size: 12px;
+  color: #d6dfb5;
+  background: #284333;
+  font-weight: 400;
+}
+.arena-hull-stats {
+  display: flex;
+  justify-content: space-around;
+  height: 24px;
+  color: #b9c79d;
+  font-size: 11px;
+}
+.arena-hull-stats > span {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.arena-hull-stats .sprite {
+  height: 20px;
+  width: 20px;
+}
+.arena-hull > button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 0 3px;
+  height: 40px;
+}
+.arena-hull > button strong {
+  color: #eddda4;
+  font-weight: 500;
+}
+.arena-hull > .arena-merge {
+  margin-top: 5px;
+  height: 36px;
+  font-size: 12px;
+  border-image-source: url("/sprites/arena-panel.svg");
+  background: #213b31;
+}
+.arena-merge .sprite {
+  width: 23px;
+  height: 23px;
+}
+.arena-merge small {
+  font-size: 10px;
+  color: #a9bc91;
+}
+.arena-hull.sealed {
+  opacity: 0.32;
+}
+.arena-hull.sealed .arena-hull-heading > .sprite {
+  filter: grayscale(1) brightness(0.5);
+}
+.arena-last-hull {
+  text-align: center;
+  color: #d6d8a0;
+  margin-top: 7px;
+}
+.arena-upgrades {
+  display: grid;
+  gap: 5px;
+  padding: 9px 13px;
+}
+.arena-upgrades > button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  height: 49px;
+  padding: 0 3px;
+  text-align: left;
+}
+.arena-upgrades .sprite {
+  width: 36px;
+  height: 36px;
+}
+.arena-upgrades > button > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.arena-upgrades strong {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+.arena-upgrades small {
+  color: #a3b58c;
+  font-size: 11px;
+}
+.arena-upgrade-price {
+  margin-left: auto;
+  text-align: right;
+}
+.arena-upgrade-price strong {
+  color: #eddda4;
+}
+@media (max-width: 360px) {
+  .arena-app {
+    grid-template-rows: minmax(0, 1fr) 222px;
+  }
+  .arena-hull {
+    flex-basis: 137px;
+  }
+  .arena-hud {
+    left: 14px;
+    right: 14px;
+  }
+}
+@media (min-width: 760px) {
+  .arena-app {
+    grid-template-rows: 1fr;
+    grid-template-columns: minmax(0, 1fr) 326px;
+  }
+  .arena-dock {
+    border-top: 0;
+    border-left: 2px solid #658266;
+    padding-top: 73px;
+  }
+  .arena-hud {
+    top: 80px;
+    left: 30px;
+    right: 30px;
+  }
+  .arena-stage {
+    top: 134px;
+    left: 30px;
+    right: 30px;
+  }
+  .arena-canvas-wrap {
+    top: 163px;
+    left: 20px;
+    right: 20px;
+    bottom: 58px;
+  }
+  .arena-field-footer {
+    left: 30px;
+    right: 25px;
+    bottom: 14px;
+  }
+  .arena-hulls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    overflow-y: auto;
+    gap: 20px 10px;
+    padding: 16px 12px;
+  }
+  .arena-hull {
+    width: 100%;
+  }
+  .arena-upgrades {
+    gap: 12px;
+    padding: 18px 14px;
+  }
+  .arena-upgrades > button {
+    height: 65px;
+  }
+  .arena-tabs {
+    height: 48px;
+  }
+  .arena-dock-content {
+    height: calc(100% - 48px);
+  }
+}
+@media (max-height: 530px) and (max-width: 759px) {
+  .arena-app {
+    grid-template-columns: minmax(0, 1fr) 238px;
+    grid-template-rows: 1fr;
+  }
+  .arena-dock {
+    border-top: 0;
+    border-left: 2px solid #658266;
+    padding-top: 5px;
+  }
+  .arena-hulls {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .arena-hull {
+    flex-basis: auto;
+  }
+  .arena-canvas-wrap {
+    top: 130px;
+    bottom: 40px;
+  }
+  .arena-stage {
+    top: 112px;
+  }
+}

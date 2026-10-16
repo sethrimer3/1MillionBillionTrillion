@@ -6,6 +6,12 @@ import {
   type RpgState,
   type RpgAction,
 } from "./rpg.ts";
+import {
+  createArena,
+  restoreArena,
+  tickArena,
+  type ArenaState,
+} from "./arena.ts";
 export const GOAL = 10n ** 27n;
 export const SAVE_KEY = "mbt-save-v1";
 export const WORLDS = [
@@ -46,15 +52,15 @@ export const WORLDS = [
     unlock: 100n,
   },
   {
-    name: "Mossy business",
-    title: "Make room for something green.",
+    name: "Shard drift",
+    title: "Small ships. Quiet collisions.",
     color: "#7caa79",
     pale: "#e7efdf",
-    kind: "leaf",
-    noun: "leaves",
-    action: "Grow a leaf",
-    auto: "Sleepy snail",
-    desc: "Slow is a perfectly good speed.",
+    kind: "arena-ship-0",
+    noun: "shards",
+    action: "Launch a dart",
+    auto: "Dart fleet",
+    desc: "A little fleet in a sea of green.",
     unlock: 1000n,
   },
   {
@@ -136,6 +142,7 @@ export type State = {
   motion: boolean;
   relics: string[];
   rpg: RpgState;
+  arena: ArenaState;
   prestige: { count: number; shards: number; upgrades: string[] };
 };
 export function freshState(): State {
@@ -156,6 +163,7 @@ export function freshState(): State {
     motion: true,
     relics: [],
     rpg: createRpg(),
+    arena: createArena(),
     prestige: { count: 0, shards: 0, upgrades: [] },
   };
 }
@@ -401,6 +409,8 @@ function seedWorlds(state: State) {
     w.resonance = Math.max(w.resonance, hasUpgrade(state, "seeds") ? 1 : 0);
     w.bank = Math.max(w.bank, hasUpgrade(state, "pockets") ? 100 : 0);
   }
+  if (hasUpgrade(state, "pockets"))
+    state.arena.money = Math.max(state.arena.money, 100);
 }
 export function buyPrestigeUpgrade(state: State, id: string): boolean {
   const node = PRESTIGE_UPGRADES.find((n) => n.id === id);
@@ -434,6 +444,7 @@ export function prestige(state: State): boolean {
     meta.upgrades.push("void");
   state.worlds = freshState().worlds;
   state.rpg = createRpg();
+  state.arena = createArena();
   state.unlocked = 1;
   state.secret = true;
   state.won = false;
@@ -501,8 +512,22 @@ export function advance(state: State, seconds: number) {
     : 0;
   for (let i = 0; i < state.worlds.length; i++) {
     if (!worldAvailable(state, i)) continue;
+    if (i === 3) continue;
     const w = state.worlds[i];
     credit(state, i, elapsed * rate(w, state));
+  }
+  if (worldAvailable(state, 3)) {
+    const w = state.worlds[3];
+    const tempo = cycleSpeed(state) * idleBoost(state);
+    // Carry large prestige bonuses into impact strength so the visible fleet
+    // stays readable and never needs hundreds of physics clocks per frame.
+    const clock = Math.min(4, tempo);
+    const reward = tickArena(
+      state.arena,
+      elapsed * clock,
+      (w.power * multiplier(w) * (1 + w.helpers * 0.2) * tempo) / clock,
+    );
+    credit(state, 3, reward * productionBoost(state, 3));
   }
   if (state.unlocked >= 3) {
     // Bound real time first; each sped-up battle clock gets the full offline interval.
@@ -569,7 +594,7 @@ export const RELICS = [
   { id: "roaring", name: "Wild at heart", sprite: "flame" },
   { id: "harvest", name: "Golden roots", sprite: "gold-carrot" },
   { id: "perfect", name: "A kingdom in your pocket", sprite: "rpg-crown" },
-  { id: "bloom", name: "Something grew", sprite: "flower" },
+  { id: "bloom", name: "A little constellation", sprite: "arena-ship-1" },
   { id: "storm", name: "Silver lining", sprite: "storm" },
   { id: "constellation", name: "Written in stars", sprite: "moon" },
   { id: "echo", name: "A familiar dream", sprite: "crystal" },
@@ -597,6 +622,7 @@ export function discoveries(state: State): string[] {
     state.worlds.reduce((n, w) => n + w.helpers, 0) >= 10 && "crowd",
     state.won && "answer",
     state.rpg.cleared > 0 && "perfect",
+    state.arena.merges > 0 && "bloom",
   ];
   return candidates.filter((id): id is string => !!id && discover(state, id));
 }
@@ -655,6 +681,10 @@ export function loadState(raw: string | null): State {
     base.sound = s.sound === true;
     base.motion = s.motion !== false;
     base.rpg = restoreRpg(s.rpg);
+    base.arena = restoreArena(s.arena);
+    // Convert the former garden's unspent leaves once, on migration only.
+    if (!s.arena || typeof s.arena !== "object")
+      base.arena.money = base.worlds[3].bank;
     base.relics = Array.isArray(s.relics)
       ? [
           ...new Set<string>(

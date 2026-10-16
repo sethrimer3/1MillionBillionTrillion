@@ -37,6 +37,7 @@ import {
 } from "./game";
 import { sprite, uiIcon, gem, stoneSlot, scenery, torch } from "./art";
 import { mountRpg, type RpgController } from "./rpg-view";
+import { mountArena, type ArenaController } from "./arena-view";
 import "./ui-art.css";
 import "./pixel.css";
 import "./scene.css";
@@ -47,7 +48,6 @@ type Play = {
   last: number;
   ripe: number;
   plots: number[];
-  growth: number;
   chain: number;
   harvested: number;
   echo: number[];
@@ -68,6 +68,7 @@ advance(state, elapsed);
 let view: View = "gate";
 let current = 0;
 let rpgController: RpgController | undefined;
+let arenaController: ArenaController | undefined;
 let showExact = false;
 let lit = [true, true];
 let sceneKey = "";
@@ -81,7 +82,7 @@ const helpers = [
   "gnome",
   "gnome",
   "gnome",
-  "snail",
+  "arena-ship-0",
   "duck",
   "moth",
   "moth",
@@ -92,7 +93,7 @@ const upgradeNames = [
   "Kindling",
   "Garden gloves",
   "Renown charm",
-  "Watering can",
+  "Impact",
   "Rain dance",
   "Wishing stone",
   "Dream thread",
@@ -108,7 +109,6 @@ function play(i = current): Play {
       last: 0,
       ripe: Math.floor(Math.random() * 3),
       plots: [0, Date.now() + 1600, Date.now() + 2800, 0, Date.now() + 2200, 0],
-      growth: 0,
       chain: 0,
       harvested: 0,
       echo: [0, 2],
@@ -247,8 +247,12 @@ function readRoute(): void {
   renderView();
 }
 function renderView(): void {
+  arenaController?.destroy();
+  arenaController = undefined;
   document.querySelector<HTMLDialogElement>("#modal")?.close();
   document.documentElement.dataset.view = view;
+  document.documentElement.dataset.world =
+    view === "world" ? String(current) : "";
   document.querySelectorAll<HTMLElement>("[data-nav]").forEach((b) => {
     const selected = b.dataset.nav === (view === "world" ? "worlds" : view);
     b.classList.toggle("selected", selected);
@@ -402,7 +406,9 @@ function worldScreen(): string {
     header +
     (current === 2
       ? `<div class="rpg-layout"><div id="rpg-host"></div>${worldShop()}</div>`
-      : `<div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${format(multiplier(state.worlds[current]) * productionBoost(state, current))}</span></div></div>${worldShop()}</div>`) +
+      : current === 3
+        ? `<div id="arena-host"></div>`
+        : `<div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${format(multiplier(state.worlds[current]) * productionBoost(state, current))}</span></div></div>${worldShop()}</div>`) +
     "</section>"
   );
 }
@@ -435,8 +441,6 @@ function activity(): string {
         return `<button class="plot ${ready ? "ripe" : "growing"} ${golden ? "golden" : ""}" data-tap="${n}" aria-label="${golden ? "Golden carrot" : ready ? "Harvest carrot" : "Sprout"}">${sprite("soil", "plot-soil")}${sprite(ready ? (golden ? "gold-carrot" : "carrot") : "sprout", "plot-plant")}<span class="plot-shadow"></span></button>`;
       })
       .join("")}</div>`;
-  if (i === 3)
-    body = `<div class="moss-rain"></div><div class="moss-ground"></div><div class="plant-pot"><div class="pot-dirt"></div></div><button class="sprite-target growing-plant growth-${p.growth}" data-tap="0" aria-label="Water the plant">${sprite(p.growth >= 4 ? "flower" : p.growth >= 2 ? "leaf" : "sprout")}<span class="water-drop"></span></button><div class="moss-stones"></div>`;
   if (i === 4)
     body = `<div class="rain-hills"></div><div class="rain-lake"></div><div class="cloud-targets">${[0, 1, 2].map((n) => `<button class="sprite-target rain-cloud ${n === p.ripe ? "charged" : ""}" data-tap="${n}" aria-label="${n === p.ripe ? "Storm cloud" : "Cloud"}">${sprite(n === p.ripe ? "storm" : "cloud")}<span class="cloud-rain"></span></button>`).join("")}</div><div class="lakeside">${sprite("duck")}</div>`;
   if (i === 5)
@@ -473,14 +477,12 @@ function pips(): string {
   const filled =
     current === 0
       ? p.heat
-      : current === 3
-        ? p.growth
-        : current === 5
-          ? p.chain
-          : current === 6
-            ? p.input
-            : 0;
-  if (![0, 3, 5, 6].includes(current)) return "";
+      : current === 5
+        ? p.chain
+        : current === 6
+          ? p.input
+          : 0;
+  if (![0, 5, 6].includes(current)) return "";
   return Array.from(
     { length: max },
     (_, i) => `<i class="${i < filled ? "filled" : ""}"></i>`,
@@ -496,25 +498,21 @@ function activityStatus(): string {
       ? "THE PATCH"
       : current === 2
         ? "ON THE TRAIL"
-        : current === 3
-          ? p.growth === 4
-            ? "IN BLOOM"
-            : "GROWING"
-          : current === 4
-            ? "CHANCE OF RAIN"
-            : current === 5
-              ? p.chain > 2
-                ? "CONSTELLATION"
-                : "STILL WATER"
-              : current === 6
-                ? echoPhase(p) === -1
-                  ? "ECHO"
-                  : "DREAMING"
-                : current === 7
-                  ? "REFRACTION"
-                  : p.chain >= 5
-                    ? "CRITICAL MASS"
-                    : "EVENT HORIZON";
+        : current === 4
+          ? "CHANCE OF RAIN"
+          : current === 5
+            ? p.chain > 2
+              ? "CONSTELLATION"
+              : "STILL WATER"
+            : current === 6
+              ? echoPhase(p) === -1
+                ? "ECHO"
+                : "DREAMING"
+              : current === 7
+                ? "REFRACTION"
+                : p.chain >= 5
+                  ? "CRITICAL MASS"
+                  : "EVENT HORIZON";
 }
 function activityKey(): string {
   const p = play();
@@ -526,23 +524,21 @@ function activityKey(): string {
         ? p.plots.map((t) => Number(t <= Date.now())).join("") +
           ":" +
           p.harvested
-        : current === 3
-          ? p.growth
-          : current === 4
+        : current === 4
+          ? p.ripe
+          : current === 5
             ? p.ripe
-            : current === 5
-              ? p.ripe
-              : current === 6
-                ? echoPhase(p) + ":" + Number(p.mistake > Date.now())
-                : current === 7
-                  ? p.ripe + ":" + p.chain
-                  : current === 8
-                    ? p.chain
-                    : "static")
+            : current === 6
+              ? echoPhase(p) + ":" + Number(p.mistake > Date.now())
+              : current === 7
+                ? p.ripe + ":" + p.chain
+                : current === 8
+                  ? p.chain
+                  : "static")
   );
 }
 function updateScene(force = false): void {
-  if (view !== "world" || current === 2) return;
+  if (view !== "world" || current === 2 || current === 3) return;
   const key = activityKey();
   if (!force && key === sceneKey) return;
   const container = document.querySelector<HTMLDivElement>("#playground");
@@ -588,14 +584,6 @@ function tap(target: number, event: MouseEvent): void {
     if (gold) {
       word = "GOLDEN";
       earn("harvest");
-    }
-  }
-  if (i === 3) {
-    p.growth = (p.growth + 1) % 5;
-    bonus = p.growth === 0 ? 10 : 1;
-    if (bonus > 1) {
-      word = "BLOOM";
-      earn("bloom");
     }
   }
   if (i === 4) {
@@ -828,6 +816,18 @@ function bindView(): void {
       },
     );
   }
+  if (view === "world" && current === 3) {
+    arenaController = mountArena(
+      document.querySelector<HTMLElement>("#arena-host")!,
+      () => state,
+      () => {
+        chime(1, true);
+        checkDiscoveries();
+        save();
+        update();
+      },
+    );
+  }
   updateScene();
   updateGateDarkness();
 }
@@ -863,6 +863,7 @@ function openWorld(i: number, e?: MouseEvent): void {
 }
 function update(): void {
   rpgController?.update();
+  arenaController?.update();
   const n = total(state);
   const text = (id: string, value: string) => {
     const e = document.getElementById(id);
@@ -1103,12 +1104,15 @@ if (elapsed > 60 && total(state) > oldTotal)
 // Older saves receive the discoveries they already earned, without a notification parade.
 discoveries(state);
 save();
+let lastUiTick = 0;
+let lastUnlocked = state.unlocked;
 setInterval(() => {
-  const now = Date.now(),
-    oldUnlocked = state.unlocked;
+  const now = Date.now();
   advance(state, (now - lastTick) / 1000);
   lastTick = now;
-  if (state.unlocked !== oldUnlocked) {
+  if (now - lastUiTick < 150) return;
+  lastUiTick = now;
+  if (state.unlocked > lastUnlocked) {
     if (view !== "world") renderView();
     toast(
       WORLDS[state.unlocked - 1].name,
@@ -1117,13 +1121,14 @@ setInterval(() => {
     );
     save();
   }
+  lastUnlocked = state.unlocked;
   const p = plays[0];
   if (p && p.heat > 0 && now - p.last > 1100) p.heat = 0;
   updateScene();
   update();
   checkDiscoveries();
   if (now - saveTime > 5000) save();
-}, 150);
+}, 1000 / 60);
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) save();
 });

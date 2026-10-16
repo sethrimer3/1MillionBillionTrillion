@@ -82,7 +82,7 @@ test("eight migrated worlds, regrowing crops, resonance, and torch ambience", as
   await page.getByRole("button", { name: "Strange marking" }).click();
   await page.goto("/#worlds");
   await expect(page.locator(".world-card.available")).toHaveCount(8);
-  for (const i of [0, 1, 2, 3, 4, 5, 7]) {
+  for (const i of [0, 1, 2, 4, 5, 7]) {
     await page.goto("/#world/" + i);
     const before = await savedScore(page, i);
     if (i === 2) {
