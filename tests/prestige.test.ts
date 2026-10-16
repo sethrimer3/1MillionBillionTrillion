@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { navigate } from "../src/rpg.ts";
 import {
   freshState,
   total,
@@ -246,6 +247,9 @@ test("RPG speed upgrades advance the battle clock as well as renown", () => {
   regular.prestige.count = 2;
   regular.rpg.cleared = 1;
   regular.rpg.auto = true;
+  regular.rpg.maze.cell = 142;
+  // Queue the current room to start an encounter before comparing battle clocks.
+  navigate(regular.rpg, 142);
   const fast = loadState(JSON.stringify(regular));
   fast.prestige.upgrades = ["iridescent", "clockwork", "rhythm", "expedition"];
   const originalHp = regular.rpg.enemyHp;

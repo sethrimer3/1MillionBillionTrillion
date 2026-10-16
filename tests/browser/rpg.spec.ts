@@ -1,60 +1,56 @@
 import { test, expect, type Page } from "@playwright/test";
-import { createRpg, stats, enemy, ITEMS } from "../../src/rpg";
-
-async function seed(page: Page, advanced = false) {
-  const r = createRpg();
-  r.seed = 42;
-  if (advanced) {
-    r.level = 12;
-    r.cleared = 8;
-    r.zone = 7;
-    r.wave = 4;
-    r.kills = 40;
-    r.bosses = 8;
-    r.owned = ITEMS.map((i) => i.id);
-    r.gear = { weapon: "weapon-7", armor: "armor-7", charm: "charm-7" };
-    r.gold = 300;
-    r.ink = 100;
-    r.attributes = { might: 3, vigor: 4, wisdom: 4 };
-    r.hp = stats(r).maxHp;
-    r.mp = stats(r).maxMp;
-    r.enemyHp = enemy(r).hp;
-  }
-  const state = {
-    worlds: Array.from({ length: 8 }, () => ({
-      score: 100,
-      bank: 500,
-      helpers: 0,
-      power: 1,
-    })),
-    unlocked: 7,
-    secret: false,
-    won: false,
-    saved: Date.now(),
-    clicks: 1,
-    sound: false,
-    rpg: r,
-  };
+import { freshState, type State } from "../../src/game.ts";
+import {
+  recruit,
+  rest,
+  navigate,
+  chooseAbility,
+  ITEMS,
+} from "../../src/rpg.ts";
+import { MAP_CENTER, WORLD_MAP } from "../../src/rpg-map.ts";
+const near = WORLD_MAP.find((c) => c.room && c.distance === 2)!.id;
+const middle = WORLD_MAP.find((c) => c.room && c.distance === 8)!.id;
+const outer = WORLD_MAP.find((c) => c.room && c.distance === 16)!.id;
+async function seed(page: Page, edit?: (s: State) => void) {
+  const s = freshState();
+  s.unlocked = 7;
+  s.worlds.forEach((w) => {
+    w.score = 100;
+    w.bank = 500;
+  });
+  edit?.(s);
   await page.addInitScript((s) => {
-    if (!sessionStorage.getItem("rpg-fixture")) {
+    if (!sessionStorage.getItem("kingdom-fixture")) {
       localStorage.setItem("mbt-save-v1", JSON.stringify(s));
-      sessionStorage.setItem("rpg-fixture", "yes");
+      sessionStorage.setItem("kingdom-fixture", "yes");
     }
-  }, state);
+  }, s);
+  await page.goto("/#world/2");
+  await expect(page.locator(".kingdom-app")).toBeVisible();
 }
-async function saved(page: Page) {
+function strong(s: State) {
+  const r = s.rpg;
+  r.level = 12;
+  r.kills = 40;
+  r.cleared = 8;
+  r.gold = 1000;
+  r.ink = 100;
+  r.owned = ITEMS.map((i) => i.id);
+  r.gear = { weapon: "weapon-2", armor: "armor-3", charm: "charm-3" };
+  for (const id of ["pip", "moss", "mote"]) recruit(r, id);
+  rest(r);
+}
+async function saved(page: Page): Promise<State> {
   return page.evaluate(() => {
     window.dispatchEvent(new Event("pagehide"));
     return JSON.parse(localStorage.getItem("mbt-save-v1")!);
   });
 }
-async function win(page: Page) {
-  let attempts = 0;
-  while (await page.locator("#rpg-enemy").count()) {
-    await page.locator(".chosen-command").click();
-    if (++attempts > 30) throw Error("Encounter failed to complete");
-  }
-  await expect(page.locator(".victory-card")).toBeVisible();
+async function tab(page: Page, name: string) {
+  await page
+    .locator(".kingdom-tabs")
+    .getByRole("button", { name, exact: true })
+    .click();
 }
 const errors = new WeakMap<Page, string[]>();
 test.beforeEach(async ({ page }) => {
@@ -63,133 +59,161 @@ test.beforeEach(async ({ page }) => {
 });
 test.afterEach(async ({ page }) => expect(errors.get(page)).toEqual([]));
 
-test("a small RPG opening expands through earned combat, equipment, attributes, maps, and forging", async ({
+test("a new adventurer walks clicked squares and automatically earns the first loot and level", async ({
   page,
-}, info) => {
+}) => {
   await seed(page);
-  await page.goto("/#world/2");
-  await expect(page.locator(".kingdom-app")).toBeVisible();
+  expect((await saved(page)).rpg.maze.cell).toBe(MAP_CENTER);
   await expect(
-    page.locator(".paint-window, .paint-tools, .paint-palette"),
+    page.locator(".paint-window,.paint-palette,.paint-tools"),
   ).toHaveCount(0);
-  await expect(page.locator(".kingdom-tabs button")).toHaveCount(1);
-  if (info.project.name === "mobile") {
-    await page.evaluate(() => document.fonts.ready);
-    const attack = await page.locator(".chosen-command").boundingBox();
-    const viewport = await page.locator("#screen").boundingBox();
-    const navigation = await page.locator(".scene-navigation").boundingBox();
-    expect(attack!.y + attack!.height).toBeLessThanOrEqual(
-      viewport!.y + viewport!.height,
-    );
-    expect(attack!.y).toBeGreaterThan(navigation!.y + navigation!.height);
-  }
-  if (info.project.name === "mobile") await page.locator("#rpg-enemy").tap();
-  else await page.locator("#rpg-enemy").click();
-  expect((await saved(page)).rpg.enemyHp).toBeLessThan(14);
-  await win(page);
-  await expect(page.locator("#world-score")).toHaveText("110");
-  await page
-    .locator(".kingdom-tabs")
-    .getByRole("button", { name: "Bag", exact: true })
-    .click();
+  await expect(page.locator(".atlas-cell.current")).toHaveAttribute(
+    "data-map-cell",
+    String(MAP_CENTER),
+  );
+  await page.locator(`[data-map-cell="${near}"]`).click();
+  await expect(page.locator("#rpg-battle-status")).toHaveText("BATTLE");
+  await expect
+    .poll(async () => (await saved(page)).rpg.enemyHp)
+    .toBeLessThan(38);
+  await expect
+    .poll(async () => (await saved(page)).rpg.kills, {
+      timeout: 12000,
+      intervals: [100, 250],
+    })
+    .toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Pause battle", exact: true }).click();
+  const s = await saved(page);
+  expect(s.rpg.level).toBe(2);
+  expect(s.rpg.owned).toContain("weapon-0");
+  expect(s.worlds[2].score).toBe(142);
+  await tab(page, "Bag");
   await page
     .getByRole("button", { name: "Equip Bramble blade", exact: true })
     .click();
   expect((await saved(page)).rpg.gear.weapon).toBe("weapon-0");
-
-  await page
-    .locator(".kingdom-tabs")
-    .getByRole("button", { name: "Adventure", exact: true })
-    .click();
-  for (let encounter = 1; encounter < 5; encounter++) {
-    await page.locator("#rpg-continue").click();
-    await win(page);
-  }
-  expect((await saved(page)).rpg.cleared).toBe(1);
-  await expect(
-    page
-      .locator(".kingdom-tabs")
-      .getByRole("button", { name: "Map", exact: true }),
-  ).toBeVisible();
-  await page
-    .locator(".kingdom-tabs")
-    .getByRole("button", { name: /Hero/ })
-    .click();
+  await tab(page, "Hero");
   await page
     .getByRole("button", { name: "Increase might", exact: true })
     .click();
   expect((await saved(page)).rpg.attributes.might).toBe(1);
-  await page.locator('[data-rpg-party="pip"]').click();
-  expect((await saved(page)).rpg.party).toContain("pip");
-  await page
-    .locator(".kingdom-tabs")
-    .getByRole("button", { name: "Map", exact: true })
-    .click();
-  await page.locator('[data-rpg-zone="1"]').click();
-  await page.getByRole("button", { name: "Set out", exact: false }).click();
-  await win(page);
-  await page
-    .locator(".kingdom-tabs")
-    .getByRole("button", { name: "Camp", exact: true })
-    .click();
-  await page.locator('[data-rpg-forge="weapon-0"]').click();
-  expect((await saved(page)).rpg.forged["weapon-0"]).toBe(1);
   await page.reload();
-  expect((await saved(page)).rpg.forged["weapon-0"]).toBe(1);
+  expect((await saved(page)).rpg.attributes.might).toBe(1);
+  expect((await saved(page)).rpg.auto).toBe(false);
 });
-test("advanced kingdoms expose magic, quests, companions, and endless exploration on narrow screens", async ({
+test("recruiting fills four party slots and companions can be exchanged at camp", async ({
   page,
 }) => {
-  await seed(page, true);
-  await page.goto("/#world/2");
-  const before = await saved(page);
-  await page.getByRole("button", { name: "Sunburst", exact: true }).click();
-  const after = await saved(page);
-  expect(after.rpg.enemyHp).toBeLessThan(before.rpg.enemyHp);
-  expect(after.rpg.mp).toBe(before.rpg.mp - 6);
-  for (const width of [320, 390, 768]) {
-    await page.setViewportSize({ width, height: 844 });
-    for (const tab of ["Bag", "Hero", "Map", "Camp", "Journal"]) {
-      await page
-        .locator(".kingdom-tabs")
-        .getByRole("button", { name: new RegExp("^" + tab) })
-        .click();
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-        `${tab} at ${width}`,
-      ).toBe(true);
-    }
+  await seed(page, (s) => {
+    s.rpg.kills = 20;
+    s.rpg.gold = 500;
+    s.rpg.level = 5;
+    rest(s.rpg);
+  });
+  await tab(page, "Party");
+  for (const id of ["pip", "moss", "mote"]) {
+    await page.locator(`[data-recruit="${id}"]`).click();
   }
-  await page.locator('[data-rpg-claim="first-road"]').click();
-  await expect(page.locator('[data-rpg-claim="first-road"]')).toBeDisabled();
-  expect((await saved(page)).rpg.claimed).toContain("first-road");
+  await expect(page.locator(".party-portrait:not(.empty)")).toHaveCount(4);
+  expect((await saved(page)).rpg.party).toEqual(["pip", "moss", "mote"]);
+  await page.locator('[data-recruit="puddle"]').click();
+  await expect(page.locator('[data-party="puddle"]')).toBeDisabled();
+  await page.locator('[data-party="mote"]').click();
+  await page.locator('[data-party="puddle"]').click();
+  expect((await saved(page)).rpg.party).toEqual(["pip", "moss", "puddle"]);
   await page
-    .locator(".kingdom-tabs")
-    .getByRole("button", { name: "Hero", exact: true })
+    .getByRole("button", { name: "Select Puddle", exact: true })
     .click();
-  await page.locator('[data-rpg-party="mote"]').click();
-  expect((await saved(page)).rpg.party).toContain("mote");
+  await expect(
+    page.getByRole("button", { name: "Puddle: Mend", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await page
-    .locator(".kingdom-tabs")
-    .getByRole("button", { name: "Map", exact: true })
+    .getByRole("button", { name: "Puddle: Soft rain", exact: true })
     .click();
-  await page.locator('[data-rpg-zone="8"]').click();
-  expect((await saved(page)).rpg.zone).toBe(8);
-  await page.getByRole("button", { name: "Set out", exact: false }).click();
-  await expect(page.locator(".rpg-scene-label")).toContainText(
-    "The Endless Canvas",
-  );
+  expect((await saved(page)).rpg.members.puddle.ability).toBe("rain");
+  await page.reload();
+  expect((await saved(page)).rpg.party).toEqual(["pip", "moss", "puddle"]);
 });
-test("mid-battle saves, navigation, and RPG sprites survive an offline relaunch", async ({
+test("all four members fight automatically and each active ability can change during battle", async ({
+  page,
+}) => {
+  await seed(page, (s) => {
+    strong(s);
+    s.rpg.maze.cell = middle;
+    navigate(s.rpg, middle);
+  });
+  await expect(page.locator(".kingdom-foe")).toHaveCount(2);
+  const before = await saved(page);
+  for (const [name, ability] of [
+    ["You", "Power strike"],
+    ["Pip", "Volley"],
+    ["Moss", "Shell"],
+    ["Mote", "Arc"],
+  ]) {
+    await page
+      .getByRole("button", { name: "Select " + name, exact: true })
+      .click();
+    const button = page.getByRole("button", {
+      name: name + ": " + ability,
+      exact: true,
+    });
+    await button.click();
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+  }
+  const s = await saved(page);
+  expect(s.rpg.auto).toBe(true);
+  expect(s.rpg.members.hero.ability).toBe("stroke");
+  expect(s.rpg.members.pip.ability).toBe("volley");
+  expect(s.rpg.members.moss.ability).toBe("shell");
+  expect(s.rpg.members.mote.ability).toBe("arc");
+  await expect
+    .poll(async () => {
+      const s = await saved(page);
+      return (
+        s.rpg.enemyHp < before.rpg.enemyHp || s.rpg.kills > before.rpg.kills
+      );
+    })
+    .toBe(true);
+});
+test("panning the maze and queuing an outer area displays its higher danger and reward without teleporting", async ({
+  page,
+}) => {
+  await seed(page, (s) => strong(s));
+  await page.locator(`[data-map-cell="${outer}"]`).scrollIntoViewIfNeeded();
+  await page.locator(`[data-map-cell="${outer}"]`).click();
+  await expect(page.locator("#rpg-distance")).toContainText("16 FROM CAMP");
+  expect(
+    Number((await page.locator("#rpg-preview-level").textContent())!),
+  ).toBeGreaterThan(3);
+  expect(
+    Number(
+      (await page.locator("#rpg-preview-gold").textContent())!.replace("+", ""),
+    ),
+  ).toBeGreaterThan(12);
+  const first = await saved(page);
+  expect(first.rpg.maze.cell).not.toBe(outer);
+  expect(first.rpg.maze.route.at(-1)).toBe(outer);
+  await expect
+    .poll(async () => (await saved(page)).rpg.maze.cell)
+    .not.toBe(MAP_CENTER);
+  await expect(page.locator(".atlas-cell.on-route")).not.toHaveCount(0);
+  await page.getByRole("button", { name: "Find party", exact: true }).click();
+  await expect(page.locator(".atlas-cell.current")).toBeInViewport();
+});
+test("mid-battle party choices and queued paths survive reload and an offline relaunch", async ({
   page,
   context,
 }) => {
-  await seed(page);
-  await page.goto("/#world/2");
-  await page.locator(".chosen-command").click();
-  const state = await saved(page);
+  await seed(page, (s) => {
+    strong(s);
+    s.rpg.maze.cell = middle;
+    navigate(s.rpg, middle);
+    navigate(s.rpg, outer);
+    chooseAbility(s.rpg, "moss", "shell");
+    chooseAbility(s.rpg, "pip", "mark");
+    s.rpg.auto = false;
+  });
+  const before = await saved(page);
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
@@ -198,18 +222,81 @@ test("mid-battle saves, navigation, and RPG sprites survive an offline relaunch"
     .toBe(true);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.locator("#rpg-enemy")).toBeVisible();
-  expect((await saved(page)).rpg.enemyHp).toBe(state.rpg.enemyHp);
-  await page.locator(".chosen-command").click();
-  expect((await saved(page)).rpg.enemyHp).toBeLessThan(state.rpg.enemyHp);
-  expect(
-    await page
-      .locator(".rpg-hero img")
-      .first()
-      .evaluate((img: HTMLImageElement) => img.naturalWidth),
-  ).toBe(96);
-  await page.locator("#settings").click();
-  await expect(page.locator("#modal")).toBeVisible();
-  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page.locator(".atlas-grid")).toBeVisible();
+  const restored = await saved(page);
+  expect(restored.rpg.members.moss.ability).toBe("shell");
+  expect(restored.rpg.members.pip.ability).toBe("mark");
+  expect(restored.rpg.enemyHp).toBe(before.rpg.enemyHp);
+  expect(restored.rpg.maze.route).toEqual(before.rpg.maze.route);
+  for (const img of await page.locator(".party-portrait img").all())
+    expect(
+      await img.evaluate(
+        (el: HTMLImageElement) => el.complete && el.naturalWidth > 0,
+      ),
+    ).toBe(true);
+  await page
+    .getByRole("button", { name: "Resume battle", exact: true })
+    .click();
+  await expect
+    .poll(async () => (await saved(page)).rpg.enemyHp)
+    .toBeLessThan(before.rpg.enemyHp);
   await context.setOffline(false);
+});
+test("equipment, forging, quests, renown upgrades, and the next atlas page remain usable", async ({
+  page,
+}) => {
+  await seed(page, (s) => strong(s));
+  await tab(page, "Forge");
+  await page.locator('[data-rpg-forge="weapon-2"]').click();
+  expect((await saved(page)).rpg.forged["weapon-2"]).toBe(1);
+  await page.locator('[data-kingdom-upgrade="helper"]').click();
+  expect((await saved(page)).worlds[2].helpers).toBe(1);
+  await page.locator("[data-next-page]").click();
+  expect((await saved(page)).rpg.depth).toBe(1);
+  await tab(page, "Journal");
+  await page.locator('[data-rpg-claim="first-road"]').click();
+  await expect(page.locator('[data-rpg-claim="first-road"]')).toBeDisabled();
+  await tab(page, "Bag");
+  await page
+    .getByRole("button", { name: "Equip Daybreak", exact: true })
+    .click();
+  expect((await saved(page)).rpg.gear.weapon).toBe("weapon-7");
+});
+test("the maze, battle and party controls fit phones, desktop and landscape without a page scrollbar", async ({
+  page,
+}) => {
+  await seed(page, (s) => strong(s));
+  for (const [width, height] of [
+    [320, 740],
+    [390, 844],
+    [768, 1024],
+    [1440, 1000],
+    [844, 390],
+    [667, 375],
+  ]) {
+    await page.setViewportSize({ width, height });
+    for (const name of ["World", "Party", "Bag", "Hero", "Forge", "Journal"]) {
+      await tab(page, name);
+      const bounds = await page
+        .locator("#rpg-host")
+        .evaluate((el) => ({ width: el.scrollWidth, height: el.scrollHeight }));
+      expect(bounds.width, `${name} width at ${width}`).toBeLessThanOrEqual(
+        width + 1,
+      );
+      expect(bounds.height, `${name} height at ${height}`).toBeLessThanOrEqual(
+        height + 1,
+      );
+      const party = (await page.locator(".kingdom-party").boundingBox())!;
+      expect(party.y + party.height).toBeLessThanOrEqual(height + 1);
+      const ability = (await page
+        .locator("[data-ability]")
+        .first()
+        .boundingBox())!;
+      expect(ability.y).toBeGreaterThan(50);
+      expect(ability.y + ability.height).toBeLessThanOrEqual(height + 1);
+    }
+    await tab(page, "World");
+    await page.getByRole("button", { name: "Find party", exact: true }).click();
+    await expect(page.locator(".atlas-cell.current")).toBeInViewport();
+  }
 });

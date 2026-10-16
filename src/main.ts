@@ -405,7 +405,7 @@ function worldScreen(): string {
   return (
     header +
     (current === 2
-      ? `<div class="rpg-layout"><div id="rpg-host"></div>${worldShop()}</div>`
+      ? `<div id="rpg-host"></div>`
       : current === 3
         ? `<div id="arena-host"></div>`
         : `<div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${format(multiplier(state.worlds[current]) * productionBoost(state, current))}</span></div></div>${worldShop()}</div>`) +

@@ -1,0 +1,306 @@
+export type Slot = "weapon" | "armor" | "charm";
+export type Attribute = "might" | "vigor" | "wisdom";
+export type CombatAction =
+  "attack" | "guard" | "stroke" | "heal" | "nova" | "potion";
+export type RpgAction =
+  CombatAction | "continue" | "rest" | "auto" | "buy-potion";
+export type Item = {
+  id: string;
+  name: string;
+  sprite: string;
+  slot: Slot;
+  attack: number;
+  defense: number;
+  magic: number;
+  tier: number;
+};
+export const REGIONS = [
+  {
+    name: "Dewdrop Meadow",
+    short: "Meadow",
+    biome: "meadow",
+    sprite: "rpg-hut",
+    foes: ["Dewdrop slime", "Clover mite", "Doodle bee"],
+    sprites: ["rpg-slime", "rpg-mite", "rpg-bee"],
+    boss: "King Smudge",
+    bossSprite: "rpg-slime-king",
+  },
+  {
+    name: "Timberwood",
+    short: "Timberwood",
+    biome: "forest",
+    sprite: "rpg-tree",
+    foes: ["Inkcap", "Brush fox", "Splinterling"],
+    sprites: ["rpg-mushroom", "rpg-wolf", "rpg-tree"],
+    boss: "The Hollow Oak",
+    bossSprite: "rpg-tree-boss",
+  },
+  {
+    name: "Chalk Caverns",
+    short: "Caverns",
+    biome: "cave",
+    sprite: "rpg-golem",
+    foes: ["Pebbleling", "Crystal bat", "Stone snail"],
+    sprites: ["rpg-golem", "rpg-bat", "snail"],
+    boss: "The Chalk Colossus",
+    bossSprite: "rpg-golem",
+  },
+  {
+    name: "Soggy Fen",
+    short: "The fen",
+    biome: "marsh",
+    sprite: "rpg-witch",
+    foes: ["Mire jelly", "Lantern moth", "Reed goblin"],
+    sprites: ["rpg-slime-blue", "moth", "rpg-goblin"],
+    boss: "The Bog Witch",
+    bossSprite: "rpg-witch",
+  },
+  {
+    name: "Skyward Isles",
+    short: "Sky isles",
+    biome: "sky",
+    sprite: "rpg-roc",
+    foes: ["Cloudling", "Paper wasp", "Thunder imp"],
+    sprites: ["cloud", "rpg-bee", "rpg-goblin"],
+    boss: "The Storm Roc",
+    bossSprite: "rpg-roc",
+  },
+  {
+    name: "Frostbitten Page",
+    short: "Frostfield",
+    biome: "snow",
+    sprite: "rpg-crown",
+    foes: ["Snow puff", "Frost wolf", "Ice sprite"],
+    sprites: ["rpg-slime-blue", "rpg-wolf", "rpg-bat"],
+    boss: "The Frost Crown",
+    bossSprite: "rpg-king",
+  },
+  {
+    name: "Forgotten Margins",
+    short: "The ruins",
+    biome: "ruins",
+    sprite: "rpg-knight",
+    foes: ["Rune sentinel", "Lost shade", "Ink knight"],
+    sprites: ["rpg-golem", "rpg-shade", "rpg-knight"],
+    boss: "The Erased King",
+    bossSprite: "rpg-king",
+  },
+  {
+    name: "The Sunspire",
+    short: "Sunspire",
+    biome: "spire",
+    sprite: "rpg-sun-boss",
+    foes: ["Sun sprite", "Gilded wasp", "Solar knight"],
+    sprites: ["sun", "rpg-bee", "rpg-knight"],
+    boss: "The Unwritten",
+    bossSprite: "rpg-sun-boss",
+  },
+  {
+    name: "The Endless Canvas",
+    short: "Beyond",
+    biome: "void",
+    sprite: "eye",
+    foes: ["Unfinished thought", "Something almost real", "A familiar shadow"],
+    sprites: ["rpg-shade", "rpg-slime-gold", "rpg-knight"],
+    boss: "The Next Page",
+    bossSprite: "rpg-sun-boss",
+  },
+] as const;
+export const ITEMS: Item[] = [
+  {
+    id: "stub",
+    name: "Twig sword",
+    sprite: "rpg-pencil",
+    slot: "weapon",
+    attack: 0,
+    defense: 0,
+    magic: 0,
+    tier: 0,
+  },
+  {
+    id: "shirt",
+    name: "Patched shirt",
+    sprite: "rpg-tunic",
+    slot: "armor",
+    attack: 0,
+    defense: 0,
+    magic: 0,
+    tier: 0,
+  },
+  ...[
+    "Bramble blade",
+    "Timber blade",
+    "Chalk cutter",
+    "Reed saber",
+    "Cloud cleaver",
+    "Frost nib",
+    "Inkbound sword",
+    "Daybreak",
+  ].map((name, i) => ({
+    id: "weapon-" + i,
+    name,
+    sprite: i < 2 ? "rpg-sword" : i < 5 ? "rpg-sword-silver" : "rpg-sword-gold",
+    slot: "weapon" as const,
+    attack: 3 + i * 5,
+    defense: 0,
+    magic: i,
+    tier: i + 1,
+  })),
+  ...[
+    "Leaf vest",
+    "Bark coat",
+    "Stone mail",
+    "Marsh cloak",
+    "Skyweave",
+    "Frostguard",
+    "Royal plate",
+    "Sunsteel",
+  ].map((name, i) => ({
+    id: "armor-" + i,
+    name,
+    sprite: i < 3 ? "rpg-tunic" : "rpg-armor",
+    slot: "armor" as const,
+    attack: 0,
+    defense: 2 + i * 3,
+    magic: 0,
+    tier: i + 1,
+  })),
+  ...[
+    "Dew pendant",
+    "Amber acorn",
+    "Chalk charm",
+    "Witchlight",
+    "Stormglass",
+    "Frozen tear",
+    "Last memory",
+    "Little sun",
+  ].map((name, i) => ({
+    id: "charm-" + i,
+    name,
+    sprite: i < 4 ? "rpg-pendant" : "rpg-orb",
+    slot: "charm" as const,
+    attack: 0,
+    defense: Math.floor(i / 2),
+    magic: 2 + i * 2,
+    tier: i + 1,
+  })),
+];
+export const COMPANIONS = [
+  {
+    id: "pip",
+    name: "Pip",
+    sprite: "rpg-ally-pip",
+    cleared: 1,
+    kills: 2,
+    cost: 12,
+    stat: "Ranger",
+  },
+  {
+    id: "moss",
+    name: "Moss",
+    sprite: "rpg-ally-moss",
+    cleared: 3,
+    kills: 6,
+    cost: 35,
+    stat: "Guardian",
+  },
+  {
+    id: "mote",
+    name: "Mote",
+    sprite: "rpg-ally-mote",
+    cleared: 5,
+    kills: 12,
+    cost: 65,
+    stat: "Mage",
+  },
+  {
+    id: "puddle",
+    name: "Puddle",
+    sprite: "rpg-ally-puddle",
+    cleared: 7,
+    kills: 20,
+    cost: 100,
+    stat: "Healer",
+  },
+] as const;
+export const SKILLS: {
+  id: CombatAction;
+  name: string;
+  sprite: string;
+  level: number;
+  mp: number;
+}[] = [
+  { id: "attack", name: "Strike", sprite: "rpg-sword", level: 1, mp: 0 },
+  { id: "guard", name: "Guard", sprite: "rpg-shield", level: 1, mp: 0 },
+  {
+    id: "stroke",
+    name: "Power strike",
+    sprite: "rpg-sword-gold",
+    level: 2,
+    mp: 3,
+  },
+  { id: "heal", name: "Mend", sprite: "rpg-orb", level: 4, mp: 4 },
+  { id: "nova", name: "Sunburst", sprite: "sun", level: 8, mp: 6 },
+];
+export const QUESTS = [
+  {
+    id: "first-road",
+    name: "A little further",
+    sprite: "rpg-scroll",
+    goal: 5,
+    kind: "kills",
+    gold: 25,
+    ink: 4,
+    renown: 30,
+  },
+  {
+    id: "beyond",
+    name: "Over the hill",
+    sprite: "rpg-map",
+    goal: 2,
+    kind: "cleared",
+    gold: 70,
+    ink: 8,
+    renown: 100,
+  },
+  {
+    id: "collector",
+    name: "Pocket treasures",
+    sprite: "rpg-chest",
+    goal: 6,
+    kind: "items",
+    gold: 50,
+    ink: 10,
+    renown: 60,
+  },
+  {
+    id: "sharper",
+    name: "Something stronger",
+    sprite: "rpg-hammer",
+    goal: 3,
+    kind: "forged",
+    gold: 90,
+    ink: 12,
+    renown: 150,
+  },
+  {
+    id: "old-magic",
+    name: "A familiar warmth",
+    sprite: "sun",
+    goal: 8,
+    kind: "level",
+    gold: 150,
+    ink: 20,
+    renown: 250,
+  },
+  {
+    id: "unwritten",
+    name: "The last blank page",
+    sprite: "rpg-crown",
+    goal: 8,
+    kind: "cleared",
+    gold: 500,
+    ink: 50,
+    renown: 1500,
+  },
+] as const;

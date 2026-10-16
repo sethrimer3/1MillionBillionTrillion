@@ -1,233 +1,465 @@
-import { type State, format, rpgAction, rewardRenown, unlock } from "./game";
 import {
-  REGIONS,
-  ITEMS,
+  type State,
+  format,
+  rpgAction,
+  rewardRenown,
+  unlock,
+  purchase,
+  price,
+  type Upgrade,
+} from "./game";
+import { MAP_CENTER, MAP_SIZE, WORLD_MAP } from "./rpg-map";
+import {
+  ABILITIES,
+  MEMBER_ABILITIES,
+  MEMBER_NAMES,
   COMPANIONS,
-  SKILLS,
+  ITEMS,
   QUESTS,
-  enemy,
+  REGIONS,
+  activeMembers,
+  memberStats,
+  memberSprite,
   stats,
-  nextXp,
   points,
-  skillReady,
-  travel,
+  nextXp,
+  areaStats,
+  navigate,
+  chooseAbility,
+  companionReady,
+  recruit,
+  party,
+  allocate,
   equip,
   forge,
   forgeCost,
-  allocate,
-  party,
   claim,
   questProgress,
-  type RpgAction,
-  type Result,
+  nextPage,
+  type MemberId,
+  type AbilityId,
   type Attribute,
+  type Result,
 } from "./rpg";
 import { sprite, uiIcon } from "./art";
 import "./rpg.css";
-
-type Tab = "trail" | "bag" | "hero" | "map" | "camp" | "scraps";
+type Tab = "world" | "party" | "bag" | "hero" | "camp" | "journal";
 export type RpgController = { update: () => void };
-type Hooks = {
-  changed: (result?: Result, event?: MouseEvent) => void;
-};
+type Hooks = { changed: (result?: Result, event?: MouseEvent) => void };
+const tabs: [Tab, string, string][] = [
+  ["world", "World", "rpg-map"],
+  ["party", "Party", "rpg-ally-pip"],
+  ["bag", "Bag", "rpg-chest"],
+  ["hero", "Hero", "rpg-hero"],
+  ["camp", "Forge", "rpg-hammer"],
+  ["journal", "Journal", "rpg-scroll"],
+];
 export function mountRpg(
   root: HTMLElement,
   getState: () => State,
   hooks: Hooks,
 ): RpgController {
-  let tab: Tab = "trail",
-    filter = "all",
-    key = "",
-    lastResult: Result | undefined;
-  const tabArt: Record<Tab, string> = {
-    trail: "rpg-sword",
-    bag: "rpg-chest",
-    hero: "rpg-hero",
-    map: "rpg-map",
-    camp: "rpg-camp",
-    scraps: "rpg-scroll",
-  };
-  function tabs(): { id: Tab; name: string; open: boolean }[] {
+  let tab: Tab = "world",
+    selected: MemberId = "hero",
+    bodyKey = "",
+    partyKey = "",
+    battleKey = "",
+    lastCell = -1,
+    follow = true,
+    preview = -1;
+  root.innerHTML = `<section class="kingdom-app" aria-label="Pocket kingdoms"><header class="kingdom-topline"><div><small>YELLOW · III</small><h1>Pocket kingdoms</h1></div><div class="kingdom-coins">${sprite("coin")}<strong id="rpg-gold"></strong><span id="rpg-renown"></span></div></header><nav class="kingdom-tabs" aria-label="Kingdom navigation">${tabs.map(([id, name, img]) => `<button data-rpg-tab="${id}" class="${id === tab ? "current" : ""}" aria-current="${id === tab ? "page" : "false"}">${sprite(img)}<span>${name}</span></button>`).join("")}</nav><div class="kingdom-document" id="kingdom-document"></div><section class="kingdom-party" aria-label="Active party"><div class="party-portraits" id="party-portraits"></div><div class="party-commands"><div class="party-command-heading"><span id="party-command-name"></span><span id="party-mana"></span></div><div class="party-abilities" id="party-abilities" aria-label="Selected member abilities"></div></div></section></section>`;
+  const body = root.querySelector<HTMLElement>("#kingdom-document")!;
+  const image = (name: string) =>
+    import.meta.env.BASE_URL + "sprites/" + name + ".svg";
+  function meter(value: number, max: number, cls = "") {
+    return `<div class="kingdom-meter ${cls}"><i style="width:${Math.max(0, Math.min(100, (value / max) * 100))}%"></i></div>`;
+  }
+  function text(selector: string, value: string) {
+    const el = root.querySelector<HTMLElement>(selector);
+    if (el && el.textContent !== value) el.textContent = value;
+  }
+  function percent(selector: string, value: number) {
+    const el = root.querySelector<HTMLElement>(selector);
+    if (el) el.style.width = Math.max(0, Math.min(100, value)) * 1 + "%";
+  }
+  function world(): string {
+    return `<div class="kingdom-world"><section class="atlas"><header class="atlas-heading"><div><strong id="rpg-area"></strong><small id="rpg-distance"></small></div><button class="kingdom-icon-button" data-locate aria-label="Find party">${sprite("rpg-locate")}</button></header><div class="atlas-viewport" id="atlas-viewport" tabindex="0" aria-label="Scrollable maze world map"><div class="atlas-grid" style="--map-size:${MAP_SIZE}" role="group" aria-label="Maze squares">${WORLD_MAP.map((c) => (c.wall ? `<span class="atlas-wall" aria-hidden="true" style="background-image:url('${image("rpg-tile-wall-" + c.region)}')"></span>` : `<button class="atlas-cell ${c.room ? "room" : "corridor"}" data-map-cell="${c.id}" aria-label="Travel to ${c.kind === "camp" ? "camp" : REGIONS[c.region].name + " " + c.x + "," + c.y}, danger ${c.distance}" style="background-image:url('${image("rpg-tile-floor-" + c.region)}')"><span class="atlas-route">${sprite("rpg-footsteps")}</span>${c.kind === "camp" ? sprite("rpg-camp", "atlas-location") : c.kind === "lair" ? sprite("rpg-crown", "atlas-location") : c.kind === "chest" ? sprite("rpg-chest", "atlas-location") : ""}<small>${c.room && c.kind !== "camp" ? c.distance : ""}</small><span class="atlas-player">${sprite("rpg-hero")}</span><i class="atlas-cleared"></i></button>`)).join("")}</div></div><footer class="atlas-footer"><span id="rpg-route"></span><span>${sprite("rpg-sword")}<b id="rpg-preview-level"></b></span><span>${sprite("coin")}<b id="rpg-preview-gold"></b></span><span>✦ <b id="rpg-preview-renown"></b></span></footer></section><section class="kingdom-battle"><div class="kingdom-battle-canvas" id="rpg-canvas"><div class="kingdom-battle-label"><span id="rpg-battle-place"></span><strong id="rpg-battle-status"></strong></div><div class="kingdom-actors" id="kingdom-actors"></div><div class="kingdom-foes" id="kingdom-foes"></div><div class="kingdom-encounter" id="kingdom-encounter"></div></div><div class="kingdom-battle-controls"><button data-rpg-action="auto" class="kingdom-icon-button" id="rpg-auto" aria-label="Pause battle">${sprite("rpg-pause")}</button><span id="rpg-message"></span><button data-rpg-action="potion" class="kingdom-icon-button" aria-label="Use potion">${sprite("rpg-potion")}<small id="rpg-potions"></small></button><button data-rpg-action="rest" class="kingdom-icon-button" aria-label="Return to camp">${sprite("rpg-camp")}</button></div></section></div>`;
+  }
+  function roster(): string {
     const r = getState().rpg;
-    return [
-      { id: "trail", name: "Adventure", open: true },
-      { id: "bag", name: "Bag", open: r.kills > 0 },
-      { id: "hero", name: "Hero", open: r.level >= 2 },
-      { id: "map", name: "Map", open: r.cleared > 0 },
-      { id: "camp", name: "Camp", open: r.level >= 3 },
-      { id: "scraps", name: "Journal", open: r.kills >= 5 },
-    ];
-  }
-  function abilities(): string {
-    const r = getState().rpg;
-    return `<div class="rpg-abilities" aria-label="Combat abilities">${SKILLS.filter(
-      (s) => s.id !== "attack" && r.level >= s.level,
-    )
-      .map(
-        (s) =>
-          `<button class="rpg-ability" data-rpg-action="${s.id}" aria-label="${s.name}" ${r.status !== "battle" || !skillReady(r, s.id) ? "disabled" : ""}>${sprite(s.sprite)}<span>${s.name}${s.mp ? "<small>" + s.mp + " MP</small>" : ""}</span></button>`,
-      )
-      .join("")}</div>`;
-  }
-  function bar(label: string, value: number, max: number, cls: string): string {
-    return `<div class="rpg-bar-row"><span>${label}</span><div class="rpg-meter ${cls}"><i style="width:${Math.min(100, Math.max(0, (value / max) * 100))}%"></i></div><strong>${Math.floor(value)}<small>/${max}</small></strong></div>`;
-  }
-  function trail(): string {
-    const r = getState().rpg,
-      s = stats(r),
-      foe = enemy(r),
-      region = REGIONS[r.zone],
-      skill = SKILLS.find((x) => x.id === "attack")!;
-    const battle = r.status === "battle",
-      victory = r.status === "victory",
-      camp = r.status === "camp";
-    return `<div class="rpg-canvas biome-${region.biome} ${lastResult?.damage ? "last-strike" : ""}" id="rpg-canvas"><div class="rpg-sky-sun"></div><div class="rpg-cloud rpg-cloud-one"></div><div class="rpg-cloud rpg-cloud-two"></div><div class="rpg-back-hills"></div><div class="rpg-front-hills"></div><div class="rpg-ground"></div><div class="rpg-path"></div><div class="rpg-scene-label"><span>${region.name}${r.zone === 8 ? " · " + (r.depth + 1) : ""}</span><small>${foe.boss ? "BOSS" : String(r.wave + 1).padStart(2, "0") + " / 05"}</small></div><div class="rpg-scenery scenery-left">${sprite(r.zone === 0 ? "rpg-hut" : r.zone === 1 ? "rpg-tree" : r.zone === 2 ? "crystal" : r.zone === 3 ? "rpg-mushroom" : r.zone === 4 ? "cloud" : r.zone === 5 ? "rpg-tree" : r.zone === 6 ? "rpg-golem" : "rpg-orb")}</div><div class="rpg-scenery scenery-right">${sprite(r.zone < 2 ? "rpg-tree" : r.zone === 2 ? "crystal" : r.zone === 3 ? "rpg-mushroom" : "rpg-tree")}</div><div class="rpg-hero actor" style="--cloak:${r.color * 43}deg">${sprite("rpg-hero")}<i class="actor-shadow"></i><span>you</span></div>${r.party
-      .map((id, i) => {
-        const ally = COMPANIONS.find((c) => c.id === id)!;
-        return `<div class="rpg-party-actor ally-${i}">${sprite(ally.sprite)}</div>`;
-      })
-      .join(
-        "",
-      )}${battle ? `<div class="foe-label"><span>${foe.boss ? sprite("rpg-crown", "boss-crown") : ""}${foe.name}</span><small>LV ${foe.level}</small><div class="foe-meter"><i style="width:${(r.enemyHp / foe.hp) * 100}%"></i></div><strong>${r.enemyHp} / ${foe.hp}</strong></div><button class="rpg-enemy actor ${foe.boss ? "boss" : ""}" id="rpg-enemy" data-rpg-action="attack" aria-label="${skill.name} ${foe.name}">${sprite(foe.sprite)}<i class="actor-shadow"></i></button><span class="enemy-intent ${foe.heavy ? "heavy" : ""}">${sprite(foe.heavy ? "rpg-sword-gold" : "rpg-sword")}<span>${foe.heavy ? "WINDING UP" : "WATCHING"}</span></span>` : camp ? `<div class="rpg-campfire">${sprite("ember")}</div><div class="encounter-card camp-card"><span class="encounter-kicker">A QUIET MOMENT</span><h3>The trail is waiting.</h3><button class="rpg-button rpg-primary" data-rpg-action="continue">${sprite("rpg-map")}Set out ${uiIcon("arrow")}</button></div>` : victory ? `<div class="encounter-card victory-card"><span class="encounter-kicker">${foe.boss ? "TRAIL CLEARED" : "VICTORY"}</span><h3>${foe.boss ? foe.name : "A little braver."}</h3><div class="victory-rewards"><span>${sprite("coin")}+${(4 + r.zone * 5) * (foe.boss ? 3 : 1)}</span><span>+${(8 + r.zone * 8) * (foe.boss ? 3 : 1)} XP</span>${lastResult?.drop ? `<span>${sprite(ITEMS.find((x) => x.id === lastResult!.drop)?.sprite || "rpg-chest")}</span>` : ""}</div>${lastResult?.levelUp ? `<span class="new-level">LEVEL ${r.level}</span>` : ""}<button class="rpg-button rpg-primary" id="rpg-continue" data-rpg-action="continue">Continue ${uiIcon("arrow")}</button>${foe.boss && r.cleared > r.zone ? '<button class="canvas-map-link" data-rpg-tab="map">' + sprite("rpg-map") + " A new horizon</button>" : ""}</div>` : `<div class="encounter-card down-card"><span class="encounter-kicker">JUST A SCRATCH.</span><h3>The path can wait.</h3><button class="rpg-button rpg-primary" data-rpg-action="rest">${sprite("rpg-camp")}Back to the fire</button></div>`}<div class="rpg-grass grass-a"></div><div class="rpg-grass grass-b"></div><div class="canvas-hand-note">${r.zone === 0 ? "somewhere, a story begins." : r.zone === 8 ? "there is always another page." : ""}</div></div><div class="rpg-combat-dock"><div class="hero-vitals"><div class="hero-name"><strong>The little adventurer</strong><span>LV ${r.level}</span></div>${bar("HP", r.hp, s.maxHp, "health")}${r.level >= 2 ? bar("MP", r.mp, s.maxMp, "mana") : ""}${bar("XP", r.xp, nextXp(r.level), "experience")}</div>${abilities()}<div class="rpg-command-row"><button class="rpg-button rpg-primary chosen-command" data-rpg-action="attack" ${!battle || !skillReady(r, "attack") ? "disabled" : ""}>${sprite(skill.sprite)}<span>${skill.name}${skill.mp ? "<small>" + skill.mp + " MP</small>" : ""}</span></button><button class="rpg-button compact-command" data-rpg-action="potion" aria-label="Use potion" title="Potion" ${!battle || r.potions === 0 ? "disabled" : ""}>${sprite("rpg-potion")}<span>${r.potions}</span></button><button class="rpg-button compact-command" data-rpg-action="rest" aria-label="Rest at camp" title="Camp">${sprite("rpg-camp")}</button>${r.cleared > 0 ? `<button class="rpg-button compact-command ${r.auto ? "auto-on" : ""}" data-rpg-action="auto" aria-label="Auto battle" aria-pressed="${r.auto}">${uiIcon("clock")}<span>AUTO</span></button>` : ""}</div></div>`;
+    return `<section class="kingdom-paper"><div class="kingdom-paper-heading"><h2>Good company</h2><span>${r.party.length + 1} / 4</span></div><div class="kingdom-roster">${COMPANIONS.map(
+      (c) => {
+        const owned = r.recruited.includes(c.id),
+          joined = r.party.includes(c.id),
+          ready = companionReady(r, c.id);
+        return `<article class="roster-member ${ready || owned ? "" : "unmet"}">${sprite(c.sprite)}<div><h3>${c.name}</h3><small>${c.stat}</small><div class="roster-skills">${MEMBER_ABILITIES[c.id].map((id) => sprite(ABILITIES[id].sprite, "", ABILITIES[id].name)).join("")}</div></div><button class="kingdom-button" ${owned ? `data-party="${c.id}" ${r.status === "battle" || (!joined && r.party.length >= 3) ? "disabled" : ""}` : `data-recruit="${c.id}" ${!ready || r.gold < c.cost ? "disabled" : ""}`}>${owned ? (joined ? "Leave" : "Join") : ready ? "Recruit · " + c.cost : c.kills + " encounters"}</button></article>`;
+      },
+    ).join("")}</div></section>`;
   }
   function bag(): string {
     const r = getState().rpg;
-    return `<section class="rpg-paper rpg-bag"><div class="paper-heading"><div><span class="paper-kicker">THINGS PICKED UP ALONG THE WAY</span><h3>A pocketful of possibility.</h3></div>${sprite("rpg-chest")}</div><div class="bag-filters">${[
-      ["all", "All"],
-      ["weapon", "Weapons"],
-      ["armor", "Armor"],
-      ["charm", "Charms"],
-    ]
-      .map(
-        ([id, label]) =>
-          `<button class="rpg-button ${filter === id ? "pressed" : ""}" data-bag-filter="${id}">${sprite(({ all: "rpg-chest", weapon: "rpg-sword", armor: "rpg-shield", charm: "rpg-orb" } as Record<string, string>)[id])}${label}</button>`,
-      )
-      .join("")}</div><div class="bag-grid">${r.owned
-      .filter(
-        (id) =>
-          filter === "all" || ITEMS.find((x) => x.id === id)?.slot === filter,
-      )
+    return `<section class="kingdom-paper"><div class="kingdom-paper-heading"><h2>Bag</h2><span>${r.owned.length}</span></div><div class="kingdom-bag">${r.owned
       .map((id) => {
-        const item = ITEMS.find((x) => x.id === id)!,
-          active = r.gear[item.slot] === id;
-        return `<button class="bag-item ${active ? "equipped" : ""}" data-rpg-equip="${id}" aria-label="${active ? "Equipped: " : "Equip "}${item.name}"><div class="item-portrait">${sprite(item.sprite)}${r.forged[id] ? "<span>+" + r.forged[id] + "</span>" : ""}</div><strong>${item.name}</strong><small>${item.slot === "weapon" ? "ATK +" + (item.attack + (r.forged[id] || 0) * 2) : item.slot === "armor" ? "DEF +" + (item.defense + (r.forged[id] || 0) * 2) : "MAG +" + (item.magic + (r.forged[id] || 0) * 2)}</small><span class="equipped-tag">${active ? "EQUIPPED" : "EQUIP"}</span></button>`;
+        const item = ITEMS.find((i) => i.id === id)!,
+          worn = r.gear[item.slot] === id;
+        return `<button data-rpg-equip="${id}" class="kingdom-item ${worn ? "equipped" : ""}" aria-label="${worn ? "Equipped: " : "Equip "}${item.name}">${sprite(item.sprite)}<strong>${item.name}</strong><small>${item.slot === "weapon" ? "ATK +" + (item.attack + (r.forged[id] || 0) * 2) : item.slot === "armor" ? "DEF +" + (item.defense + (r.forged[id] || 0) * 2) : "MAG +" + (item.magic + (r.forged[id] || 0) * 2)}</small><span>${worn ? "✓" : "+"}</span></button>`;
       })
       .join("")}</div></section>`;
   }
   function hero(): string {
     const r = getState().rpg,
       s = stats(r);
-    return `<section class="rpg-paper"><div class="hero-sheet"><div class="portrait-paper" style="--cloak:${r.color * 43}deg">${sprite("rpg-hero")}<span>the little adventurer</span></div><div class="character-summary"><span class="paper-kicker">A WORK IN PROGRESS</span><h3>Level ${r.level}</h3><div class="character-stats"><span>${sprite("rpg-sword")}ATK <strong>${s.attack}</strong></span><span>${sprite("rpg-shield")}DEF <strong>${s.defense}</strong></span><span>${sprite("rpg-orb")}MAG <strong>${s.magic}</strong></span></div><div class="stat-points">${points(r)} unspent ${points(r) === 1 ? "point" : "points"}</div></div></div><div class="attribute-list">${(["might", "vigor", "wisdom"] as Attribute[]).map((a, i) => `<div class="attribute-row">${sprite(["rpg-sword", "rpg-shield", "rpg-orb"][i])}<span><strong>${a[0].toUpperCase() + a.slice(1)}</strong><small>${["ATK +2", "HP +7 · DEF +1", "MAG +3 · MP +2"][i]}</small></span><b>${r.attributes[a]}</b><button class="rpg-button" data-rpg-attribute="${a}" aria-label="Increase ${a}" ${points(r) < 1 ? "disabled" : ""}>${uiIcon("plus")}</button></div>`).join("")}</div><div class="paper-section-heading"><h4>Little talents</h4><span>${r.level}/50</span></div><div class="skill-collection">${SKILLS.map((s) => `<div class="skill-card ${r.level < s.level ? "unknown" : ""}">${sprite(s.sprite)}<strong>${r.level >= s.level ? s.name : "???"}</strong><small>${r.level >= s.level ? (s.mp ? s.mp + " MP" : "—") : "LV " + s.level}</small></div>`).join("")}</div>${r.cleared > 0 ? `<div class="paper-section-heading"><h4>Good company</h4><span>${r.party.length} / 2</span></div><div class="companion-grid">${COMPANIONS.map((c) => `<button class="companion ${r.party.includes(c.id) ? "traveling" : ""} ${r.cleared < c.cleared ? "unknown" : ""}" data-rpg-party="${c.id}" ${r.cleared < c.cleared ? "disabled" : ""}>${sprite(c.sprite)}<span><strong>${r.cleared >= c.cleared ? c.name : "???"}</strong><small>${r.cleared >= c.cleared ? c.stat : "· · ·"}</small></span><i>${uiIcon(r.party.includes(c.id) ? "check" : "plus")}</i></button>`).join("")}</div>` : ""}</section>`;
-  }
-  function map(): string {
-    const r = getState().rpg;
-    return `<section class="rpg-paper rpg-map-paper"><div class="paper-heading"><div><span class="paper-kicker">A MAP WITH UNFINISHED EDGES</span><h3>Beyond the next hill.</h3></div>${sprite("rpg-map")}</div><div class="region-map">${REGIONS.map((region, i) => `<button class="map-region ${i <= r.cleared ? "charted" : "uncharted"} ${i === r.zone ? "current" : ""} ${i < r.cleared ? "cleared" : ""}" data-rpg-zone="${i}" ${i > r.cleared ? "disabled" : ""}><span class="map-number">${i === 8 ? uiIcon("infinity") : String(i + 1).padStart(2, "0")}</span>${sprite(region.sprite)}<strong>${i <= r.cleared ? region.short : "???"}</strong><small>${i === r.zone ? "YOU ARE HERE" : i < r.cleared ? "CLEARED" : i === r.cleared ? "EXPLORE" : "· · ·"}</small>${i < r.cleared ? "<i>" + uiIcon("check") + "</i>" : ""}</button>`).join("")}</div></section>`;
+    return `<section class="kingdom-paper"><div class="kingdom-hero-sheet">${sprite("rpg-hero")}<div><h2>Level ${r.level}</h2><span>ATK ${s.attack} · DEF ${s.defense} · MAG ${s.magic}</span><small>${r.xp} / ${nextXp(r.level)} XP</small>${meter(r.xp, nextXp(r.level), "xp")}</div></div><div class="kingdom-paper-heading"><h3>Attributes</h3><span>${points(r)} points</span></div>${(["might", "vigor", "wisdom"] as Attribute[]).map((a, i) => `<div class="kingdom-stat-row">${sprite(["rpg-sword", "rpg-shield", "rpg-orb"][i])}<span><strong>${a[0].toUpperCase() + a.slice(1)}</strong><small>${["+2 ATK", "+7 HP · +1 DEF", "+3 MAG · +2 MP"][i]}</small></span><b>${r.attributes[a]}</b><button class="kingdom-button" data-rpg-attribute="${a}" aria-label="Increase ${a}" ${points(r) ? "" : "disabled"}>+</button></div>`).join("")}<div class="kingdom-paper-heading"><h3>Talents</h3></div><div class="kingdom-talents">${MEMBER_ABILITIES.hero.map((id) => `<div>${sprite(ABILITIES[id].sprite)}<span>${ABILITIES[id].name}</span><small>LV ${ABILITIES[id].level}</small></div>`).join("")}</div></section>`;
   }
   function camp(): string {
-    const r = getState().rpg;
-    return `<section class="rpg-paper camp-paper"><div class="camp-banner">${sprite("rpg-camp")}<div><span class="paper-kicker">SOMETHING LIKE HOME</span><h3>The little camp.</h3></div><button class="rpg-button" data-rpg-action="rest">Rest ${uiIcon("clock")}</button></div><div class="camp-supplies"><div>${sprite("rpg-potion")}<span><strong>Red bottle</strong><small>${r.potions} in your bag</small></span><button class="rpg-button" data-rpg-action="buy-potion" ${r.gold < 12 || r.potions >= 99 ? "disabled" : ""}>12 ${sprite("coin")}+</button></div></div><div class="paper-section-heading"><h4>A sharper idea.</h4><span>${sprite("rpg-ink")}${r.ink}</span></div><div class="forge-list">${(
-      ["weapon", "armor", "charm"] as const
-    )
-      .filter((slot) => !!r.gear[slot])
-      .map((slot) => {
-        const id = r.gear[slot],
-          item = ITEMS.find((x) => x.id === id)!;
-        return `<div class="forge-row">${sprite(item.sprite)}<span><strong>${item.name}</strong><small>+${r.forged[id] || 0} ${slot === "weapon" ? "ATK +2" : slot === "armor" ? "DEF +2" : "MAG +2"}</small></span><button class="rpg-button" data-rpg-forge="${id}" ${r.ink < forgeCost(r, id) || (r.forged[id] || 0) >= 20 ? "disabled" : ""}>${(r.forged[id] || 0) >= 20 ? "MAX" : forgeCost(r, id)} ${sprite("rpg-ink")}+</button></div>`;
-      })
-      .join("")}</div></section>`;
-  }
-  function scraps(): string {
-    const r = getState().rpg;
-    return `<section class="rpg-paper"><div class="paper-heading"><div><span class="paper-kicker">BITS OF A BIGGER STORY</span><h3>Unfinished business.</h3></div>${sprite("rpg-scroll")}</div><div class="quest-list">${QUESTS.map(
-      (q) => {
-        const n = questProgress(r, q.kind),
-          done = r.claimed.includes(q.id);
-        return `<div class="quest-card ${done ? "claimed" : ""}">${sprite(q.sprite)}<div><h4>${q.name}</h4><span>${Math.min(n, q.goal)} / ${q.goal} ${q.kind === "cleared" ? "trails" : q.kind === "items" ? "treasures" : q.kind === "forged" ? "forgings" : q.kind === "level" ? "levels" : "creatures"}</span><div class="quest-rewards">${sprite("coin")} ${q.gold} <b>·</b> ${sprite("rpg-ink")} ${q.ink} <b>·</b> ${q.renown} renown</div></div><button class="rpg-button" data-rpg-claim="${q.id}" ${done || n < q.goal ? "disabled" : ""}>${done ? uiIcon("check") : "Claim"}</button></div>`;
-      },
-    ).join("")}</div></section>`;
-  }
-  function render(force = false): void {
     const state = getState(),
       r = state.rpg,
-      newKey = `${r.revision}:${tab}:${filter}`;
-    if (!force && key === newKey) return;
-    key = newKey;
-    if (!tabs().find((t) => t.id === tab)?.open) tab = "trail";
-    const active = (document.activeElement as HTMLElement)?.closest("button");
-    const attribute =
-      active && root.contains(active)
-        ? [
-            "data-rpg-action",
-            "data-rpg-equip",
-            "data-rpg-attribute",
-            "data-rpg-party",
-            "data-rpg-forge",
-            "data-rpg-claim",
-            "data-rpg-tab",
-            "data-bag-filter",
-          ].find((a) => active.hasAttribute(a))
-        : undefined;
-    const focus = attribute
-      ? { attribute, value: active!.getAttribute(attribute)! }
-      : null;
-    root.innerHTML = `<section class="kingdom-app" aria-label="Pocket kingdoms"><div class="kingdom-topline"><span class="kingdom-chapter">${sprite("rpg-map")}${r.zone < 8 ? "CHAPTER " + String(r.zone + 1).padStart(2, "0") : "BEYOND THE MAP"}</span><span class="rpg-gold">${sprite("coin")}<span id="rpg-gold">${format(r.gold)}</span></span></div><nav class="kingdom-tabs" aria-label="Kingdom navigation">${tabs()
-      .filter((t) => t.open)
+      w = state.worlds[2];
+    return `<section class="kingdom-paper"><div class="kingdom-paper-heading"><h2>Forge</h2><span>${sprite("rpg-ink")}${r.ink}</span></div>${Object.values(
+      r.gear,
+    )
+      .filter(Boolean)
       .map(
-        (t) =>
-          `<button class="${tab === t.id ? "current" : ""}" data-rpg-tab="${t.id}" ${tab === t.id ? 'aria-current="page"' : ""}>${sprite(tabArt[t.id])}<span>${t.name}</span>${t.id === "hero" && points(r) > 0 ? "<i>" + points(r) + "</i>" : ""}</button>`,
+        (id) =>
+          `<div class="kingdom-stat-row">${sprite(ITEMS.find((i) => i.id === id)!.sprite)}<span><strong>${ITEMS.find((i) => i.id === id)!.name}</strong><small>+${r.forged[id] || 0}</small></span><button class="kingdom-button" data-rpg-forge="${id}" ${r.level < 3 || r.ink < forgeCost(r, id) || (r.forged[id] || 0) >= 20 ? "disabled" : ""}>${(r.forged[id] || 0) >= 20 ? "MAX" : forgeCost(r, id) + " ink"}</button></div>`,
       )
       .join(
         "",
-      )}</nav><div class="kingdom-document ${tab === "trail" ? "" : "paper-document"}">${tab === "trail" ? trail() : tab === "bag" ? bag() : tab === "hero" ? hero() : tab === "map" ? map() : tab === "camp" ? camp() : scraps()}</div><div class="rpg-log"><span id="rpg-message">${r.log[0]}</span><span>${r.kills} encounters</span></div></section>`;
-    if (focus)
-      (
-        root.querySelector<HTMLButtonElement>(
-          `[${focus.attribute}="${focus.value}"]:not(:disabled)`,
-        ) ||
-        root.querySelector<HTMLButtonElement>(".kingdom-tabs button.current")
-      )?.focus({ preventScroll: true });
+      )}<div class="kingdom-paper-heading"><h3>Supplies</h3><span>${r.potions} bottles</span></div><div class="kingdom-stat-row">${sprite("rpg-potion")}<span>Red bottle</span><button class="kingdom-button" data-rpg-action="buy-potion" ${r.gold < 12 || r.potions >= 99 ? "disabled" : ""}>12 gold</button></div><div class="kingdom-paper-heading"><h3>Renown</h3><span>${format(w.bank)} ✦</span></div>${(["helper", "power", "resonance"] as Upgrade[]).map((key, i) => `<div class="kingdom-stat-row">${sprite(["gnome", "rpg-pendant", "rune"][i])}<span><strong>${["Trail companion", "Renown charm", "Resonance"][i]}</strong><small>LV ${key === "helper" ? w.helpers : key === "power" ? w.power : w.resonance}</small></span><button class="kingdom-button" data-kingdom-upgrade="${key}" ${w.bank < price(w, key, state) || (key === "resonance" && w.score < 250) ? "disabled" : ""}>${format(price(w, key, state))} ✦</button></div>`).join("")}${r.cleared >= 8 ? `<button class="kingdom-button next-page" data-next-page ${r.maze.cell === MAP_CENTER ? "" : "disabled"}>The next page · ${r.depth + 2} ${uiIcon("arrow")}</button>` : ""}</section>`;
   }
-  root.addEventListener("click", (event) => {
+  function journal(): string {
+    const r = getState().rpg;
+    return `<section class="kingdom-paper"><div class="kingdom-paper-heading"><h2>Journal</h2><span>${r.kills} encounters</span></div>${QUESTS.map((q) => `<article class="kingdom-quest">${sprite(q.sprite)}<div><h3>${q.name}</h3><small>${Math.min(q.goal, questProgress(r, q.kind))} / ${q.goal} · ${q.gold} gold · ${q.renown} renown</small></div><button class="kingdom-button" data-rpg-claim="${q.id}" ${r.claimed.includes(q.id) || questProgress(r, q.kind) < q.goal ? "disabled" : ""}>${r.claimed.includes(q.id) ? "✓" : "Claim"}</button></article>`).join("")}</section>`;
+  }
+  function centerMap(): void {
+    const r = getState().rpg,
+      viewport = root.querySelector<HTMLElement>("#atlas-viewport"),
+      cell = root.querySelector<HTMLElement>(
+        `[data-map-cell="${r.maze.cell}"]`,
+      );
+    if (viewport && cell) {
+      viewport.scrollLeft = cell.offsetLeft + 22 - viewport.clientWidth / 2;
+      viewport.scrollTop = cell.offsetTop + 22 - viewport.clientHeight / 2;
+    }
+  }
+  function updateWorld(): void {
+    const r = getState().rpg,
+      tile = WORLD_MAP[r.maze.cell],
+      a = areaStats(preview < 0 ? r.maze.cell : preview, r.depth);
+    text(
+      "#rpg-area",
+      r.depth > 0
+        ? "The Endless Canvas"
+        : REGIONS[WORLD_MAP[preview < 0 ? r.maze.cell : preview].region].name,
+    );
+    text(
+      "#rpg-distance",
+      a.distance === 0
+        ? "THE LITTLE CAMP"
+        : `${a.distance} FROM CAMP${r.depth ? " · PAGE " + (r.depth + 1) : ""}`,
+    );
+    text(
+      "#rpg-route",
+      r.maze.route.length
+        ? `${r.maze.route.length} STEPS`
+        : r.maze.cell === MAP_CENTER
+          ? "CAMP"
+          : `${tile.x - 9}, ${tile.y - 9}`,
+    );
+    const destination = WORLD_MAP[preview < 0 ? r.maze.cell : preview];
+    const factor = destination.kind === "lair" ? 3 : a.count;
+    text("#rpg-preview-level", a.distance ? String(a.level) : "—");
+    text(
+      "#rpg-preview-gold",
+      a.distance
+        ? "+" +
+            a.rewards.gold *
+              factor *
+              (destination.kind === "chest" &&
+              !r.maze.cleared.includes(destination.id)
+                ? 2
+                : 1)
+        : "—",
+    );
+    text(
+      "#rpg-preview-renown",
+      a.distance ? "+" + a.rewards.renown * factor : "—",
+    );
+    root.querySelectorAll<HTMLElement>("[data-map-cell]").forEach((el) => {
+      const id = Number(el.dataset.mapCell);
+      el.classList.toggle("visited", r.maze.visited.includes(id));
+      el.classList.toggle("charted", r.maze.cleared.includes(id));
+      el.classList.toggle("current", id === r.maze.cell);
+      el.classList.toggle("on-route", r.maze.route.includes(id));
+      if (id === r.maze.cell) el.setAttribute("aria-current", "location");
+      else el.removeAttribute("aria-current");
+    });
+    if (lastCell !== r.maze.cell) {
+      lastCell = r.maze.cell;
+      if (follow) centerMap();
+    }
+    const key =
+      r.status +
+      ":" +
+      r.foes.map((f) => f.id).join(",") +
+      ":" +
+      r.party.join(",") +
+      ":" +
+      r.zone;
+    const canvas = root.querySelector<HTMLElement>("#rpg-canvas")!;
+    canvas.style.backgroundImage = `url('${image("rpg-landscape-" + Math.min(7, r.zone))}')`;
+    text(
+      "#rpg-battle-place",
+      r.maze.cell === MAP_CENTER ? "The little camp" : REGIONS[r.zone].short,
+    );
+    text(
+      "#rpg-battle-status",
+      !r.auto
+        ? "PAUSED"
+        : r.status === "battle"
+          ? "BATTLE"
+          : r.status === "victory"
+            ? "VICTORY"
+            : r.status === "down"
+              ? "DOWN"
+              : r.maze.route.length
+                ? "ON THE PATH"
+                : "AT CAMP",
+    );
+    if (key !== battleKey) {
+      battleKey = key;
+      root.querySelector("#kingdom-actors")!.innerHTML = activeMembers(r)
+        .map(
+          (id, i) =>
+            `<div class="kingdom-actor party-actor-${i}" data-actor="${id}">${sprite(memberSprite(id))}<small data-actor-effect="${id}"></small></div>`,
+        )
+        .join("");
+      root.querySelector("#kingdom-foes")!.innerHTML =
+        r.status === "battle"
+          ? r.foes
+              .map(
+                (f, i) =>
+                  `<div class="kingdom-foe foe-position-${i}" data-foe="${i}">${sprite(f.sprite, "", f.name)}<span>${f.name}</span>${meter(f.hp, f.maxHp)}<small data-foe-hp="${i}"></small><b data-foe-intent="${i}"></b></div>`,
+              )
+              .join("")
+          : "";
+      root.querySelector("#kingdom-encounter")!.innerHTML =
+        r.status === "down"
+          ? `<button class="kingdom-button" data-rpg-action="rest">${sprite("rpg-camp")}Back to the fire</button>`
+          : r.status === "victory"
+            ? `${sprite("rpg-chest")}<strong>+${format(r.maze.reward)} ✦</strong>`
+            : r.maze.cell === MAP_CENTER
+              ? `${sprite("rpg-camp")}<small>${r.maze.route.length ? "ON THE PATH" : "THE LITTLE CAMP"}</small>`
+              : "";
+    }
+    for (const id of activeMembers(r)) {
+      const m = r.members[id],
+        el = root.querySelector<HTMLElement>(`[data-actor="${id}"]`);
+      el?.classList.toggle("acting", m.flash > 0 && m.hp > 0);
+      el?.classList.toggle("fallen", m.hp <= 0);
+      text(`[data-actor-effect="${id}"]`, m.flash > 0 ? m.last : "");
+    }
+    r.foes.forEach((f, i) => {
+      const el = root.querySelector<HTMLElement>(`[data-foe="${i}"]`);
+      el?.classList.toggle("hit", f.flash > 0);
+      el?.classList.toggle("fallen", f.hp <= 0);
+      el?.classList.toggle("marked", f.marked > 0);
+      percent(`[data-foe="${i}"] .kingdom-meter i`, (f.hp / f.maxHp) * 100);
+      text(`[data-foe-hp="${i}"]`, `${Math.ceil(f.hp)} / ${f.maxHp}`);
+      text(`[data-foe-intent="${i}"]`, f.turn % 3 === 2 ? "!" : "");
+    });
+    const auto = root.querySelector<HTMLButtonElement>("#rpg-auto")!;
+    auto.setAttribute("aria-label", r.auto ? "Pause battle" : "Resume battle");
+    auto.setAttribute("aria-pressed", String(r.auto));
+    auto.innerHTML = sprite(r.auto ? "rpg-pause" : "rpg-play");
+    text("#rpg-message", r.status === "down" ? "Back to the fire." : r.log[0]);
+    text("#rpg-potions", String(r.potions));
+  }
+  function updateParty(): void {
+    const r = getState().rpg,
+      ids = activeMembers(r);
+    if (!ids.includes(selected)) selected = "hero";
+    const key = ids.join(",") + ":" + selected + ":" + r.level;
+    if (key !== partyKey) {
+      partyKey = key;
+      root.querySelector("#party-portraits")!.innerHTML = Array.from(
+        { length: 4 },
+        (_, i) => {
+          const id = ids[i];
+          return id
+            ? `<button class="party-portrait ${selected === id ? "selected" : ""}" data-member="${id}" aria-label="Select ${MEMBER_NAMES[id]}" aria-pressed="${selected === id}">${sprite(memberSprite(id))}<span><strong>${MEMBER_NAMES[id]}</strong><small data-party-health="${id}"></small>${meter(1, 1)}</span><i class="party-clock"><b data-party-clock="${id}"></b></i></button>`
+            : `<button class="party-portrait empty" data-rpg-tab="party" aria-label="Empty party slot">+<small>${i + 1}</small></button>`;
+        },
+      ).join("");
+      root.querySelector("#party-abilities")!.innerHTML = MEMBER_ABILITIES[
+        selected
+      ]
+        .filter((id) => r.level >= ABILITIES[id].level)
+        .map(
+          (id) =>
+            `<button class="party-ability" data-ability="${id}" aria-label="${MEMBER_NAMES[selected]}: ${ABILITIES[id].name}">${sprite(ABILITIES[id].sprite)}<span>${ABILITIES[id].name}</span>${ABILITIES[id].mp ? `<small>${ABILITIES[id].mp}</small>` : ""}</button>`,
+        )
+        .join("");
+    }
+    for (const id of ids) {
+      const m = r.members[id],
+        s = memberStats(r, id);
+      text(`[data-party-health="${id}"]`, `${Math.ceil(m.hp)} / ${s.maxHp}`);
+      percent(`[data-member="${id}"] .kingdom-meter i`, (m.hp / s.maxHp) * 100);
+      percent(`[data-party-clock="${id}"]`, (1 - m.cooldown / s.speed) * 100);
+      root
+        .querySelector(`[data-member="${id}"]`)
+        ?.classList.toggle("fallen", m.hp <= 0);
+    }
+    const m = r.members[selected],
+      s = memberStats(r, selected);
+    text(
+      "#party-command-name",
+      `${MEMBER_NAMES[selected]} · ${m.hp <= 0 ? "KO" : ABILITIES[m.ability].name}`,
+    );
+    text("#party-mana", `${Math.floor(m.mp)} / ${s.maxMp} MP`);
+    root
+      .querySelectorAll<HTMLButtonElement>("[data-ability]")
+      .forEach((button) => {
+        const id = button.dataset.ability as AbilityId;
+        button.setAttribute("aria-pressed", String(m.ability === id));
+        button.classList.toggle("low-mana", m.mp < ABILITIES[id].mp);
+      });
+  }
+  function update(): void {
+    const state = getState(),
+      r = state.rpg;
+    text("#rpg-gold", format(r.gold));
+    text("#rpg-renown", "×" + format(state.worlds[2].score));
+    const key =
+      tab === "world"
+        ? "world"
+        : "" +
+          tab +
+          JSON.stringify([
+            r.level,
+            r.kills,
+            r.cleared,
+            r.potions,
+            r.owned,
+            r.gear,
+            r.forged,
+            r.attributes,
+            r.party,
+            r.recruited,
+            r.claimed,
+            r.status === "battle",
+            r.maze.cell === MAP_CENTER,
+            state.worlds[2].helpers,
+            state.worlds[2].power,
+            state.worlds[2].resonance,
+          ]);
+    if (key !== bodyKey) {
+      bodyKey = key;
+      battleKey = "";
+      body.innerHTML =
+        tab === "world"
+          ? world()
+          : tab === "party"
+            ? roster()
+            : tab === "bag"
+              ? bag()
+              : tab === "hero"
+                ? hero()
+                : tab === "camp"
+                  ? camp()
+                  : journal();
+      if (tab === "world") {
+        lastCell = -1;
+        requestAnimationFrame(centerMap);
+        const viewport = root.querySelector<HTMLElement>("#atlas-viewport")!;
+        viewport.onwheel = () => {
+          follow = false;
+        };
+        viewport.ontouchstart = () => {
+          follow = false;
+        };
+      }
+    }
+    if (tab === "world") updateWorld();
+    else {
+      root
+        .querySelectorAll<HTMLButtonElement>("[data-recruit]")
+        .forEach((b) => {
+          const c = COMPANIONS.find((c) => c.id === b.dataset.recruit)!;
+          b.disabled = !companionReady(r, c.id) || r.gold < c.cost;
+        });
+      root
+        .querySelectorAll<HTMLButtonElement>("[data-rpg-forge]")
+        .forEach((b) => {
+          const id = b.dataset.rpgForge!;
+          b.disabled =
+            r.level < 3 ||
+            r.ink < forgeCost(r, id) ||
+            (r.forged[id] || 0) >= 20;
+        });
+      root
+        .querySelectorAll<HTMLButtonElement>('[data-rpg-action="buy-potion"]')
+        .forEach((b) => (b.disabled = r.gold < 12 || r.potions >= 99));
+      root
+        .querySelectorAll<HTMLButtonElement>("[data-kingdom-upgrade]")
+        .forEach((b) => {
+          const key = b.dataset.kingdomUpgrade as Upgrade,
+            w = state.worlds[2];
+          b.disabled =
+            w.bank < price(w, key, state) ||
+            (key === "resonance" && w.score < 250);
+        });
+    }
+    updateParty();
+  }
+  root.onclick = (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
       "button",
     );
     if (!button || button.disabled) return;
     const r = getState().rpg;
+    let changed = false;
     if (button.dataset.rpgTab) {
       tab = button.dataset.rpgTab as Tab;
-      lastResult = undefined;
-      render(true);
+      root
+        .querySelectorAll<HTMLButtonElement>("[data-rpg-tab]")
+        .forEach((el) =>
+          el.classList.toggle("current", el.dataset.rpgTab === tab),
+        );
+      root
+        .querySelectorAll<HTMLButtonElement>(".kingdom-tabs button")
+        .forEach((el) =>
+          el.setAttribute(
+            "aria-current",
+            el.dataset.rpgTab === tab ? "page" : "false",
+          ),
+        );
+      update();
       return;
     }
-    if (button.dataset.bagFilter) {
-      filter = button.dataset.bagFilter;
-      render(true);
+    if (button.dataset.member) {
+      selected = button.dataset.member as MemberId;
+      update();
       return;
     }
-    if (button.dataset.rpgAction) {
-      const action = button.dataset.rpgAction as RpgAction;
-      const out = rpgAction(getState(), action);
-      if (!out?.changed) return;
-      lastResult = out;
-      if (action === "rest") tab = "trail";
-      render();
-      hooks.changed(out, event);
-      const message = root.querySelector("#rpg-message");
-      if (message && out.message) message.textContent = out.message;
+    if (button.hasAttribute("data-locate")) {
+      follow = true;
+      centerMap();
       return;
     }
-    let changed = false;
-    if (button.dataset.rpgZone) {
-      changed = travel(r, Number(button.dataset.rpgZone));
-      if (changed) {
-        tab = "trail";
-        lastResult = undefined;
-      }
+    if (button.dataset.mapCell !== undefined) {
+      preview = Number(button.dataset.mapCell);
+      changed = navigate(r, preview);
+      follow = true;
     }
+    if (button.dataset.ability)
+      changed = chooseAbility(r, selected, button.dataset.ability as AbilityId);
+    if (button.dataset.recruit) changed = recruit(r, button.dataset.recruit);
+    if (button.dataset.party) changed = party(r, button.dataset.party);
     if (button.dataset.rpgEquip) changed = equip(r, button.dataset.rpgEquip);
     if (button.dataset.rpgAttribute)
       changed = allocate(r, button.dataset.rpgAttribute as Attribute);
-    if (button.dataset.rpgParty) changed = party(r, button.dataset.rpgParty);
     if (button.dataset.rpgForge) changed = forge(r, button.dataset.rpgForge);
     if (button.dataset.rpgClaim) {
       const amount = claim(r, button.dataset.rpgClaim);
@@ -237,17 +469,29 @@ export function mountRpg(
         changed = true;
       }
     }
-    if (changed) {
-      render();
-      hooks.changed();
+    if (button.dataset.kingdomUpgrade)
+      changed = purchase(
+        getState(),
+        2,
+        button.dataset.kingdomUpgrade as Upgrade,
+      );
+    if (button.hasAttribute("data-next-page")) changed = nextPage(r);
+    if (button.dataset.rpgAction) {
+      const result = rpgAction(
+        getState(),
+        button.dataset.rpgAction as Parameters<typeof rpgAction>[1],
+      );
+      changed = !!result?.changed;
+      if (button.dataset.rpgAction === "rest") {
+        preview = MAP_CENTER;
+        follow = true;
+      }
     }
-  });
-  render();
-  return {
-    update: () => {
-      render();
-      const renown = root.querySelector("#rpg-renown");
-      if (renown) renown.textContent = format(getState().worlds[2].score);
-    },
+    if (changed) {
+      update();
+      hooks.changed(undefined, event);
+    }
   };
+  update();
+  return { update };
 }

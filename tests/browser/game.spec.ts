@@ -86,8 +86,10 @@ test("eight migrated worlds, regrowing crops, resonance, and torch ambience", as
     await page.goto("/#world/" + i);
     const before = await savedScore(page, i);
     if (i === 2) {
-      while (await page.locator("#rpg-enemy").count())
-        await page.locator(".chosen-command").click();
+      await page.locator('[data-map-cell="142"]').click();
+      await expect
+        .poll(() => savedScore(page, i), { timeout: 15000 })
+        .toBeGreaterThan(before);
       expect(await savedScore(page, i)).toBeGreaterThan(before);
       continue;
     }
