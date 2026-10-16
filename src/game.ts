@@ -20,6 +20,14 @@ import {
   type CosmosState,
   type CosmosAction,
 } from "./cosmos.ts";
+import {
+  createOcean,
+  restoreOcean,
+  tickOcean,
+  actOcean,
+  type OceanState,
+  type OceanAction,
+} from "./ocean.ts";
 export const GOAL = 10n ** 27n;
 export const SAVE_KEY = "mbt-save-v1";
 export const WORLDS = [
@@ -72,15 +80,15 @@ export const WORLDS = [
     unlock: 1000n,
   },
   {
-    name: "Cloud collector",
-    title: "A small cloud with big dreams.",
+    name: "Lava tide",
+    title: "An ocean beneath a burning sky.",
     color: "#73a6c8",
     pale: "#e3edf4",
-    kind: "cloud",
-    noun: "raindrops",
-    action: "Make it rain",
-    auto: "Weather duck",
-    desc: "A chance of very big numbers.",
+    kind: "ocean-cloud",
+    noun: "steam",
+    action: "Rain lava",
+    auto: "Lava cloud",
+    desc: "Every ocean has a bottom.",
     unlock: 10000n,
   },
   {
@@ -152,6 +160,7 @@ export type State = {
   rpg: RpgState;
   arena: ArenaState;
   cosmos: CosmosState;
+  ocean: OceanState;
   prestige: { count: number; shards: number; upgrades: string[] };
 };
 export function freshState(): State {
@@ -174,6 +183,7 @@ export function freshState(): State {
     rpg: createRpg(),
     arena: createArena(),
     cosmos: createCosmos(),
+    ocean: createOcean(),
     prestige: { count: 0, shards: 0, upgrades: [] },
   };
 }
@@ -423,6 +433,12 @@ function seedWorlds(state: State) {
     state.arena.money = Math.max(state.arena.money, 100);
   if (hasUpgrade(state, "pockets"))
     state.cosmos.glow = Math.max(state.cosmos.glow, 100);
+  if (hasUpgrade(state, "pockets"))
+    state.ocean.obsidian = Math.max(state.ocean.obsidian, 100);
+  state.ocean.upgrades.clouds = Math.max(
+    state.ocean.upgrades.clouds,
+    hasUpgrade(state, "seeds") ? 3 : hasUpgrade(state, "pockets") ? 2 : 0,
+  );
   state.cosmos.upgrades.nets = Math.max(
     state.cosmos.upgrades.nets,
     hasUpgrade(state, "seeds") ? 3 : hasUpgrade(state, "pockets") ? 2 : 0,
@@ -462,6 +478,7 @@ export function prestige(state: State): boolean {
   state.rpg = createRpg();
   state.arena = createArena();
   state.cosmos = createCosmos();
+  state.ocean = createOcean();
   state.unlocked = 1;
   state.secret = true;
   state.won = false;
@@ -529,7 +546,7 @@ export function advance(state: State, seconds: number) {
     : 0;
   for (let i = 0; i < state.worlds.length; i++) {
     if (!worldAvailable(state, i)) continue;
-    if (i === 3 || i === 5) continue;
+    if (i === 3 || i === 4 || i === 5) continue;
     const w = state.worlds[i];
     credit(state, i, elapsed * rate(w, state));
   }
@@ -566,7 +583,27 @@ export function advance(state: State, seconds: number) {
         productionBoost(state, 5),
     );
   }
+  if (worldAvailable(state, 4)) {
+    const steam = tickOcean(
+      state.ocean,
+      elapsed * cycleSpeed(state) * idleBoost(state),
+    );
+    credit(
+      state,
+      4,
+      steam *
+        state.worlds[4].power *
+        multiplier(state.worlds[4]) *
+        productionBoost(state, 4),
+    );
+  }
   unlock(state);
+}
+export function oceanAction(state: State, action: OceanAction) {
+  if (!worldAvailable(state, 4)) return { changed: false };
+  const result = actOcean(state.ocean, action);
+  if (result.changed && action.kind === "rain") state.clicks++;
+  return result;
 }
 export function cosmosAction(state: State, action: CosmosAction) {
   if (!worldAvailable(state, 5)) return { changed: false, glow: 0 };
@@ -643,7 +680,7 @@ export const RELICS = [
   { id: "harvest", name: "Golden roots", sprite: "gold-carrot" },
   { id: "perfect", name: "A kingdom in your pocket", sprite: "rpg-crown" },
   { id: "bloom", name: "A little constellation", sprite: "arena-ship-1" },
-  { id: "storm", name: "Silver lining", sprite: "storm" },
+  { id: "storm", name: "The ocean's secret", sprite: "ocean-pearl" },
   {
     id: "constellation",
     name: "Written in stars",
@@ -676,6 +713,7 @@ export function discoveries(state: State): string[] {
     state.rpg.cleared > 0 && "perfect",
     state.arena.merges > 0 && "bloom",
     state.cosmos.made[1] > 0 && "constellation",
+    state.ocean.cleared > 0 && "storm",
   ];
   return candidates.filter((id): id is string => !!id && discover(state, id));
 }
@@ -736,6 +774,13 @@ export function loadState(raw: string | null): State {
     base.rpg = restoreRpg(s.rpg);
     base.arena = restoreArena(s.arena);
     base.cosmos = restoreCosmos(s.cosmos);
+    base.ocean = restoreOcean(s.ocean);
+    if (!s.ocean || typeof s.ocean !== "object") {
+      base.ocean.obsidian = Math.min(1e90, base.worlds[4].bank);
+      base.ocean.earned = base.ocean.obsidian;
+      base.ocean.upgrades.clouds = Math.min(80, base.worlds[4].helpers);
+      base.ocean.upgrades.heat = Math.min(100, base.worlds[4].power - 1);
+    }
     if (!s.cosmos || typeof s.cosmos !== "object") {
       base.cosmos.glow = Math.min(1e90, base.worlds[5].bank);
       base.cosmos.earned = base.cosmos.glow;

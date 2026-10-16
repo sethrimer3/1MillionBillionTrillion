@@ -99,12 +99,12 @@ test("eight migrated worlds, regrowing crops, resonance, and torch ambience", as
             .getByRole("button", { name: "Harvest carrot", exact: true })
             .first()
         : i === 4
-          ? page.getByRole("button", { name: "Storm cloud", exact: true })
+          ? page.getByRole("button", { name: "Rain lava 1", exact: true })
           : i === 5
             ? page.getByRole("button", { name: "Catch firefly 1", exact: true })
             : page.locator("[data-tap]").first();
     await target.click();
-    expect(await savedScore(page, i)).toBeGreaterThan(before);
+    await expect.poll(() => savedScore(page, i)).toBeGreaterThan(before);
   }
   await page.goto("/#world/1");
   const plot = page.locator(".plot.ripe").first();

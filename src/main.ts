@@ -39,6 +39,7 @@ import { sprite, uiIcon, gem, stoneSlot, scenery, torch } from "./art";
 import { mountRpg, type RpgController } from "./rpg-view";
 import { mountArena, type ArenaController } from "./arena-view";
 import { mountCosmos, type CosmosController } from "./cosmos-view";
+import { mountOcean, type OceanController } from "./ocean-view";
 import "./ui-art.css";
 import "./pixel.css";
 import "./scene.css";
@@ -71,6 +72,7 @@ let current = 0;
 let rpgController: RpgController | undefined;
 let arenaController: ArenaController | undefined;
 let cosmosController: CosmosController | undefined;
+let oceanController: OceanController | undefined;
 let showExact = false;
 let lit = [true, true];
 let sceneKey = "";
@@ -85,7 +87,7 @@ const helpers = [
   "gnome",
   "gnome",
   "arena-ship-0",
-  "duck",
+  "ocean-cloud",
   "cosmos-net",
   "moth",
   "rpg-iridescent",
@@ -96,7 +98,7 @@ const upgradeNames = [
   "Garden gloves",
   "Renown charm",
   "Impact",
-  "Rain dance",
+  "Molten heart",
   "Silk net",
   "Dream thread",
   "Cut of light",
@@ -250,6 +252,8 @@ function readRoute(): void {
 }
 function renderView(): void {
   arenaController?.destroy();
+  oceanController?.destroy();
+  oceanController = undefined;
   arenaController = undefined;
   cosmosController = undefined;
   document.querySelector<HTMLDialogElement>("#modal")?.close();
@@ -411,9 +415,11 @@ function worldScreen(): string {
       ? `<div id="rpg-host"></div>`
       : current === 3
         ? `<div id="arena-host"></div>`
-        : current === 5
-          ? `<div id="cosmos-host"></div>`
-          : `<div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${format(multiplier(state.worlds[current]) * productionBoost(state, current))}</span></div></div>${worldShop()}</div>`) +
+        : current === 4
+          ? `<div id="ocean-host"></div>`
+          : current === 5
+            ? `<div id="cosmos-host"></div>`
+            : `<div class="world-detail-grid"><div class="activity-column"><div class="activity-stage activity-${current}" id="playground" aria-label="${w.name} game"></div><div class="activity-status"><span id="activity-status">${activityStatus()}</span><div class="activity-pips" id="activity-pips">${pips()}</div><span class="world-multiplier" id="world-multiplier">×${format(multiplier(state.worlds[current]) * productionBoost(state, current))}</span></div></div>${worldShop()}</div>`) +
     "</section>"
   );
 }
@@ -446,8 +452,6 @@ function activity(): string {
         return `<button class="plot ${ready ? "ripe" : "growing"} ${golden ? "golden" : ""}" data-tap="${n}" aria-label="${golden ? "Golden carrot" : ready ? "Harvest carrot" : "Sprout"}">${sprite("soil", "plot-soil")}${sprite(ready ? (golden ? "gold-carrot" : "carrot") : "sprout", "plot-plant")}<span class="plot-shadow"></span></button>`;
       })
       .join("")}</div>`;
-  if (i === 4)
-    body = `<div class="rain-hills"></div><div class="rain-lake"></div><div class="cloud-targets">${[0, 1, 2].map((n) => `<button class="sprite-target rain-cloud ${n === p.ripe ? "charged" : ""}" data-tap="${n}" aria-label="${n === p.ripe ? "Storm cloud" : "Cloud"}">${sprite(n === p.ripe ? "storm" : "cloud")}<span class="cloud-rain"></span></button>`).join("")}</div><div class="lakeside">${sprite("duck")}</div>`;
   if (i === 6) {
     const phase = echoPhase(p);
     body = `<div class="dream-orbit orbit-a"></div><div class="dream-orbit orbit-b"></div><div class="dream-stars"></div><div class="echo-crystal">${sprite("crystal")}</div><div class="dream-tiles">${["flower-red", "flower-gold", "flower-blue", "flower"].map((s, n) => `<button class="dream-tile ${phase === n ? "echoing" : ""} ${p.mistake > now ? "mistake" : ""}" data-tap="${n}" aria-label="Dream ${n + 1}" ${phase !== -1 ? "disabled" : ""}>${sprite(s)}<span>${n + 1}</span></button>`).join("")}</div>`;
@@ -493,17 +497,15 @@ function activityStatus(): string {
       ? "THE PATCH"
       : current === 2
         ? "ON THE TRAIL"
-        : current === 4
-          ? "CHANCE OF RAIN"
-          : current === 6
-            ? echoPhase(p) === -1
-              ? "ECHO"
-              : "DREAMING"
-            : current === 7
-              ? "REFRACTION"
-              : p.chain >= 5
-                ? "CRITICAL MASS"
-                : "EVENT HORIZON";
+        : current === 6
+          ? echoPhase(p) === -1
+            ? "ECHO"
+            : "DREAMING"
+          : current === 7
+            ? "REFRACTION"
+            : p.chain >= 5
+              ? "CRITICAL MASS"
+              : "EVENT HORIZON";
 }
 function activityKey(): string {
   const p = play();
@@ -515,19 +517,17 @@ function activityKey(): string {
         ? p.plots.map((t) => Number(t <= Date.now())).join("") +
           ":" +
           p.harvested
-        : current === 4
-          ? p.ripe
-          : current === 6
-            ? echoPhase(p) + ":" + Number(p.mistake > Date.now())
-            : current === 7
-              ? p.ripe + ":" + p.chain
-              : current === 8
-                ? p.chain
-                : "static")
+        : current === 6
+          ? echoPhase(p) + ":" + Number(p.mistake > Date.now())
+          : current === 7
+            ? p.ripe + ":" + p.chain
+            : current === 8
+              ? p.chain
+              : "static")
   );
 }
 function updateScene(force = false): void {
-  if (view !== "world" || [2, 3, 5].includes(current)) return;
+  if (view !== "world" || [2, 3, 4, 5].includes(current)) return;
   const key = activityKey();
   if (!force && key === sceneKey) return;
   const container = document.querySelector<HTMLDivElement>("#playground");
@@ -575,15 +575,7 @@ function tap(target: number, event: MouseEvent): void {
       earn("harvest");
     }
   }
-  if (i === 4) {
-    bonus = target === p.ripe ? 5 : 1;
-    if (bonus > 1) {
-      word = "DOWNPOUR";
-      p.chain++;
-      if (p.chain >= 5) earn("storm");
-    }
-    p.ripe = (p.ripe + 1 + Math.floor(Math.random() * 2)) % 3;
-  }
+
   if (i === 6) {
     if (echoPhase(p) !== -1) return;
     if (target === p.echo[p.input]) {
@@ -803,6 +795,18 @@ function bindView(): void {
       },
     );
   }
+  if (view === "world" && current === 4) {
+    oceanController = mountOcean(
+      document.querySelector<HTMLElement>("#ocean-host")!,
+      () => state,
+      () => {
+        chime(1, true);
+        checkDiscoveries();
+        save();
+        update();
+      },
+    );
+  }
   if (view === "world" && current === 5) {
     cosmosController = mountCosmos(
       document.querySelector<HTMLElement>("#cosmos-host")!,
@@ -852,6 +856,7 @@ function update(): void {
   rpgController?.update();
   arenaController?.update();
   cosmosController?.update();
+  oceanController?.update();
   const n = total(state);
   const text = (id: string, value: string) => {
     const e = document.getElementById(id);

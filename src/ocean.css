@@ -1,0 +1,501 @@
+html[data-world="4"][data-view="world"] #screen {
+  padding: 0;
+  overflow: hidden;
+}
+.world-page[data-world-page="4"] {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+}
+.world-page[data-world-page="4"] > .world-heading {
+  display: none;
+}
+#ocean-host {
+  height: 100%;
+  min-width: 0;
+}
+.ocean-app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 221px;
+  background: #343d43;
+  color: #e0d3b8;
+  font-size: 13px;
+  overflow: hidden;
+}
+.ocean-app * {
+  min-width: 0;
+}
+.ocean-app button {
+  font-family: inherit;
+  color: inherit;
+  box-shadow: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+.ocean-app button:disabled {
+  cursor: default;
+}
+.ocean-app button:focus-visible {
+  outline: 2px dashed #f7bd7a;
+  outline-offset: -4px;
+}
+.ocean-app button:not(:disabled):active {
+  filter: brightness(1.2);
+}
+.ocean-scene {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 116px minmax(0, 1fr) 38px;
+  overflow: hidden;
+}
+.ocean-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 63px 18px 5px;
+  background: #343d43;
+}
+.ocean-hud h1 {
+  margin: 0;
+  font-size: 27px;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: 1px;
+}
+.ocean-hud > div > small {
+  color: #8fa29e;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+.ocean-wallet {
+  display: grid;
+  grid-template-columns: 31px auto;
+  gap: 0 5px;
+  align-items: center;
+  text-align: right;
+}
+.ocean-wallet > .sprite {
+  width: 31px;
+  height: 36px;
+  grid-row: span 2;
+}
+.ocean-wallet > strong {
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 400;
+  color: #f1d2a3;
+}
+.ocean-wallet > small {
+  font-size: 10px;
+  color: #9cafab;
+}
+.ocean-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ocean-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.ocean-clouds {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ocean-app .ocean-clouds > button {
+  position: absolute;
+  top: 6%;
+  width: 22%;
+  height: 20%;
+  max-height: 145px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+  transform: translateX(-50%);
+}
+.ocean-clouds > button:nth-child(1) {
+  left: 24%;
+  rotate: -4deg;
+}
+.ocean-clouds > button:nth-child(2) {
+  left: 50%;
+  rotate: 2deg;
+}
+.ocean-clouds > button:nth-child(3) {
+  left: 76%;
+  rotate: -2deg;
+}
+.ocean-clouds .sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.ocean-clouds > button:disabled .sprite {
+  filter: brightness(0.8);
+}
+.ocean-sea-name {
+  position: absolute;
+  top: 1%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ocean-sea-name small {
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #8d9995;
+}
+.ocean-sea-name span {
+  font-size: 11px;
+  color: #b6b9a7;
+}
+.ocean-gauge {
+  position: absolute;
+  left: 10px;
+  top: 46%;
+  bottom: 12%;
+  width: 8px;
+  border: 1px solid #8ca39a;
+  background: #34484c;
+}
+.ocean-gauge > i {
+  position: absolute;
+  top: 0;
+  left: 1px;
+  right: 1px;
+  background: #d4ab77;
+}
+.ocean-gauge > span {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: -4px;
+  font-size: 9px;
+  white-space: nowrap;
+  color: #c3c6ae;
+}
+.ocean-complete {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.ocean-complete > span {
+  display: block;
+  font-size: 24px;
+  color: #e8c993;
+  margin-bottom: 12px;
+}
+.ocean-app .ocean-complete > button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 8px solid transparent;
+  border-image: url("/sprites/ocean-frame.svg") 8 stretch;
+  background: #39494a;
+  font-size: 17px;
+  padding: 0 12px;
+}
+.ocean-complete .sprite {
+  width: 37px;
+  height: 37px;
+}
+.ocean-readout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 17px;
+  background: #34484a;
+  border-top: 1px solid #668782;
+}
+.ocean-readout > span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.ocean-readout .sprite {
+  width: 27px;
+  height: 27px;
+}
+.ocean-readout b {
+  font-size: 14px;
+  font-weight: 400;
+}
+.ocean-readout small {
+  color: #8fa9a1;
+  font-size: 10px;
+}
+.ocean-dock {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 33px minmax(0, 1fr) 43px;
+  background: #303e40;
+  border-top: 2px solid #82958a;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.ocean-dock-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid #4d6360;
+  font-size: 14px;
+}
+.ocean-dock-heading > span:last-child {
+  font-size: 10px;
+  color: #95a79b;
+}
+.ocean-tools {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 7px;
+  padding: 7px 9px;
+  align-content: start;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #82958a #303e40;
+}
+.ocean-app .ocean-tool {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  text-align: left;
+  border: 7px solid transparent;
+  border-image: url("/sprites/ocean-frame.svg") 8 stretch;
+  background: #39494a;
+  min-height: 47px;
+  width: 100%;
+  padding: 0;
+}
+.ocean-tool > .sprite {
+  width: 29px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.ocean-tool > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ocean-tool strong {
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 400;
+}
+.ocean-tool small {
+  font-size: 8px;
+  line-height: 1.1;
+  color: #98aca1;
+}
+.ocean-tool > .ocean-tool-cost {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+.ocean-tool-cost b {
+  font-size: 12px;
+  font-weight: 400;
+  color: #e0be86;
+}
+.ocean-tool:disabled {
+  opacity: 0.58;
+}
+.ocean-tool.unfound {
+  opacity: 0.3;
+}
+.ocean-finds {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  border-top: 1px solid #4d6360;
+}
+.ocean-finds > span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.ocean-finds .sprite {
+  width: 29px;
+  height: 29px;
+}
+.ocean-finds > span:not(.found) .sprite {
+  filter: brightness(0.25);
+}
+.ocean-finds b {
+  font-size: 10px;
+  color: #9bae9f;
+  font-weight: 400;
+}
+.ocean-app .ocean-finds > button {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  height: 36px;
+  padding: 2px;
+  opacity: 0.5;
+}
+.ocean-app .ocean-finds > button[aria-pressed="true"] {
+  opacity: 1;
+}
+.ocean-app [hidden] {
+  display: none !important;
+}
+@media (min-width: 850px) {
+  .ocean-app {
+    grid-template-columns: minmax(0, 1fr) 302px;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .ocean-hud {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+  .ocean-hud h1 {
+    font-size: 31px;
+  }
+  .ocean-wallet > strong {
+    font-size: 30px;
+  }
+  .ocean-dock {
+    padding-top: 75px;
+    grid-template-rows: 44px minmax(0, 1fr) 62px;
+    border-top: 0;
+    border-left: 2px solid #82958a;
+  }
+  .ocean-tools {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px 13px;
+  }
+  .ocean-app .ocean-tool {
+    min-height: 72px;
+    gap: 8px;
+  }
+  .ocean-tool > .sprite {
+    width: 42px;
+    height: 45px;
+  }
+  .ocean-tool strong {
+    font-size: 16px;
+  }
+  .ocean-tool small {
+    font-size: 11px;
+  }
+  .ocean-tool-cost b {
+    font-size: 16px;
+  }
+  .ocean-sea-name span {
+    font-size: 14px;
+  }
+  .ocean-sea-name small {
+    font-size: 10px;
+  }
+  .ocean-gauge {
+    left: 22px;
+    width: 11px;
+  }
+  .ocean-gauge > span {
+    font-size: 12px;
+  }
+  .ocean-finds {
+    gap: 13px;
+  }
+  .ocean-finds .sprite {
+    width: 37px;
+    height: 37px;
+  }
+}
+@media (max-width: 359px) {
+  .ocean-tools {
+    gap: 5px;
+    padding: 7px 5px;
+  }
+  .ocean-tool > .sprite {
+    width: 23px;
+  }
+  .ocean-tool strong {
+    font-size: 11px;
+  }
+  .ocean-tool small {
+    font-size: 7px;
+  }
+  .ocean-tool-cost b {
+    font-size: 10px;
+  }
+  .ocean-finds {
+    gap: 18px;
+  }
+}
+@media (max-height: 540px) {
+  .ocean-app {
+    grid-template-columns: minmax(0, 1fr) 244px;
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .ocean-scene {
+    grid-template-rows: 99px minmax(0, 1fr) 31px;
+  }
+  .ocean-hud {
+    padding: 63px 12px 4px;
+  }
+  .ocean-hud h1 {
+    font-size: 21px;
+  }
+  .ocean-wallet > strong {
+    font-size: 20px;
+  }
+  .ocean-wallet > .sprite {
+    width: 23px;
+    height: 28px;
+  }
+  .ocean-hud > div > small {
+    font-size: 7px;
+  }
+  .ocean-dock {
+    padding-top: 7px;
+    border-left: 2px solid #82958a;
+    border-top: 0;
+    grid-template-rows: 29px minmax(0, 1fr) 39px;
+  }
+  .ocean-tools {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+  .ocean-app .ocean-tool {
+    min-height: 48px;
+  }
+  .ocean-sea-name {
+    top: 0;
+  }
+  .ocean-sea-name small {
+    font-size: 6px;
+  }
+  .ocean-sea-name span {
+    font-size: 9px;
+  }
+  .ocean-finds {
+    gap: 12px;
+  }
+  .ocean-gauge {
+    top: 49%;
+    left: 6px;
+  }
+}
